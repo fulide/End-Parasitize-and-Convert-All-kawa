@@ -137,7 +137,7 @@ public class DeepSneakEffect extends MobEffect implements RemovableEffect{
 
     @SubscribeEvent
     public static void onEffectRemoved(MobEffectEvent.Remove event) {
-        if (event.getEffect() == ModEffects.DEEP_SNEAK) {
+        if (event.getEffect().value() == ModEffects.DEEP_SNEAK.get()) {
             LivingEntity entity = event.getEntity();
             if (entity != null) {
                 removeSpeedModifier(entity);

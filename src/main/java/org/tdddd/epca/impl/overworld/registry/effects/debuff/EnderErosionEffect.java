@@ -80,7 +80,7 @@ public class EnderErosionEffect extends MobEffect implements RemovableEffect {
     @SubscribeEvent
      public void onEffectRemove(MobEffectEvent.Remove event) {
         MobEffectInstance effectInstance = event.getEffectInstance();
-        if (effectInstance != null && effectInstance.getEffect() == this && event.getEntity() != null) {
+        if (effectInstance != null && effectInstance.getEffect().value() == this && event.getEntity() != null) {
             LivingEntity entity = event.getEntity();
             UUID uuid = entity.getUUID();
 
@@ -109,7 +109,7 @@ public class EnderErosionEffect extends MobEffect implements RemovableEffect {
     @SubscribeEvent
      public void onEffectAdded(MobEffectEvent.Added event) {
         MobEffectInstance effectInstance = event.getEffectInstance();
-        if (effectInstance != null && effectInstance.getEffect() == this && event.getEntity() != null) {
+        if (effectInstance != null && effectInstance.getEffect().value() == this && event.getEntity() != null) {
             
             UUID uuid = event.getEntity().getUUID();
             erosionValues.put(uuid, 0f);
@@ -120,7 +120,7 @@ public class EnderErosionEffect extends MobEffect implements RemovableEffect {
     @SubscribeEvent
      public void onEffectExpired(MobEffectEvent.Expired event) {
         MobEffectInstance effectInstance = event.getEffectInstance();
-        if (effectInstance != null && effectInstance.getEffect() == this && event.getEntity() != null) {
+        if (effectInstance != null && effectInstance.getEffect().value() == this && event.getEntity() != null) {
             LivingEntity entity = event.getEntity();
             UUID uuid = entity.getUUID();
 

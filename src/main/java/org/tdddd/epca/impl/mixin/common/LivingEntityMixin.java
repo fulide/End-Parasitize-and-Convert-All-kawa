@@ -45,7 +45,7 @@ public abstract class LivingEntityMixin {
         }
 
         
-        if (effectInstance == null || effectInstance.getEffect() != ModEffects.COTH) {
+        if (effectInstance == null || effectInstance.getEffect().value() != ModEffects.COTH.get()) {
             return;
         }
 
@@ -97,7 +97,7 @@ public abstract class LivingEntityMixin {
             return;
         }
 
-        if (effectInstance == null || effectInstance.getEffect() != ModEffects.COTH) {
+        if (effectInstance == null || effectInstance.getEffect().value() != ModEffects.COTH.get()) {
             return;
         }
 

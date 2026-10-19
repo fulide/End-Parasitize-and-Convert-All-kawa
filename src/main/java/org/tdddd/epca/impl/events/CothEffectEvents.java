@@ -23,7 +23,7 @@ public class CothEffectEvents {
     @SubscribeEvent
     public static void onEffectApplicable(MobEffectEvent.Applicable event) {
         
-        if (event.getEffectInstance().getEffect() != ModEffects.COTH) {
+        if (event.getEffectInstance().getEffect().value() != ModEffects.COTH.get()) {
             return;
         }
 

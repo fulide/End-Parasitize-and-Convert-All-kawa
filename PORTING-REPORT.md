@@ -212,6 +212,20 @@ cd D:\dev\projects\epca-1.21.1
 
 ---
 
+15. **🔴 仓库里缺了 2 个物品标签（已从官方 1.20.1 发布包补齐）**
+    做法：从 Modrinth 下载官方 `0.148-1.20.1` jar，逐条比对 `data/`+`assets/` 的 1219 个 JSON 与本地资源。
+    结论：**配方集合完全一致（139 = 139）**——`living_chestplate` 之类本来就没有配方（活体护甲是右键 **Living Armor Box** 整套穿戴，只有盒子可合成），不是移植丢失。
+    但发现仓库确实少提交了 2 个 tag 文件（发布 jar 里有）：
+    - `forge:enchanting_fuels`（= `epca:infested_lapis_lazuli`）→ 已补为 `data/c/tags/item/enchanting_fuels.json`
+    - `forge:infested_flesh`（= `infested_flesh` / `weird_minced_flesh` / `diseased_heart`）→ 已补为 `data/c/tags/item/infested_flesh.json`
+    第 2 个尤其重要：`erosion_clock` 配方用的就是 `c:infested_flesh`，**标签不存在时配方永远匹配不上（静默失效）**。
+
+16. **🔴 `Holder<MobEffect>` 身份比较导致功能静默失效（已修复）**
+    1.21 里效果实例持有的是注册表里的 `Holder`，而我们自己的 `ModEffects.X` 是 `DeferredHolder`（另一个对象），所以
+    `instance.getEffect() != ModEffects.COTH` 恒为 `true`、`== this` 恒为 `false`。
+    共 5 处：`CothEffectEvents`、`LivingEntityMixin`（×2）、`DeepSneakEffect`、`End……ErosionEffect`（×3）、`EffectApplicationInterceptor`。
+    已改为 `.value() != X.get()` 形式 —— 修复前 **COTH（虫巢召唤）的自定义处理、深沉潜行的移除逻辑、末影侵蚀的计时器全部是死代码**。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。
