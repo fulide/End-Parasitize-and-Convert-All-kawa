@@ -193,6 +193,21 @@ cd D:\dev\projects\epca-1.21.1
     - 4 个模块物品（`flesh_armor_module_i` / `feeding_module_i` / `flight_module_i` / `netherite_module_i`）在源仓库里**既无模型也无贴图** → 本次生成占位图标 + 模型（**占位美术**，见 §5.9）；
     - 91 个音效缺 `subtitles.epca.*` 翻译键（每个都刷一条 ERROR）→ 自动补英文/中文键；
     - 2 个生物质刷怪蛋缺 `item.epca.*` 语言键 → 补上。
+
+14. **🔴 方块掉落"全部变成掉自己"（真机问题已修复）—— 附魔判定结构在 1.21 改名**
+    现象：`epca:infested_heavy_copper_ore` 等矿石被挖后掉自身，而不是 `epca:infested_raw_copper`；用**任何**工具（含空手）都一样。
+    根因：1.20.1 的 `match_tool` 谓词写法是
+    ```json
+    "predicate": { "enchantments": [ { "enchantment": "minecraft:silk_touch", "levels": { "min": 1 } } ] }
+    ```
+    而 1.21.1 的 `ItemPredicate` 已经没有 `enchantments` 字段，附魔判定搬进了 `predicates` 子谓词，内层字段名也从 `enchantment` 改成 `enchantments`：
+    ```json
+    "predicate": { "predicates": { "minecraft:enchantments": [ { "enchantments": "minecraft:silk_touch", "levels": { "min": 1 } } ] } }
+    ```
+    Mojang 的 codec 会**静默忽略未知字段** ⇒ 整个谓词变成"空谓词" ⇒ `match_tool` **匹配任意工具** ⇒ `alternatives` 里的"精准采集"分支永远命中 ⇒ 所有方块都掉自己。
+    影响面：**95 个战利品表**（几乎所有方块的精准采集分支，共 96 处 silk_touch）。
+    修复：写脚本按 1.21 结构重写（Python，保留数组结构），并用原版 `data/minecraft/loot_table/blocks/coal_ore.json` 的谓词做结构比对 —— **逐字段完全一致**。
+    注意：`apply_bonus` 里的 `"enchantment": "minecraft:fortune"` 在 1.21 **没有变**，脚本特意跳过了它（否则时运失效）。
 13. **🔴 日志刷屏（真机上把日志刷到 2.9 MB）** —— 实体移植时留下了 `[climb-diag][spider]` 临时诊断，每个蜘蛛每 10 tick 打一条 INFO。已全部删除（`InfestedSpider` / `WalkingSpiderHead`）。
 
 ---

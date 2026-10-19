@@ -16,21 +16,27 @@
             {
               "condition": "minecraft:match_tool",
               "predicate": {
-                "enchantments": [
-                  {
-                    "enchantment": "minecraft:silk_touch",
-                    "levels": {
-                      "min": 1
+                "predicates": {
+                  "minecraft:enchantments": [
+                    {
+                      "enchantments": "minecraft:silk_touch",
+                      "levels": {
+                        "min": 1
+                      }
                     }
-                  }
-                ]
+                  ]
+                }
               }
             }
           ],
           "functions": [
             {
               "function": "minecraft:set_components",
-              "components": { "minecraft:custom_data": { "Living": false } }
+              "components": {
+                "minecraft:custom_data": {
+                  "Living": false
+                }
+              }
             }
           ]
         }
