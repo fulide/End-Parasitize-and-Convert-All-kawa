@@ -4,28 +4,18 @@ Minecraft **1.21.1** / **NeoForge 21.1.176** 的源码级移植工程（原工�
 
 - mod id：`epca`
 - 版本：`0.148-1.21.1`
-- 许可证：MIT（沿用原工程）
-- 原作者：-Yawning喵喵子-（tddddasd）
+- 许可证：MIT（沿用上游，见 [LICENSE](LICENSE)）
+- 原作者：-Yawning喵喵子-（[tddddasd](https://github.com/tddddasd)）
+- **非官方移植**，与原作者无隶属关系 —— 详见 [NOTICE.md](NOTICE.md)
 
-## 构建
+## 直接下载
 
-```powershell
-$env:JAVA_HOME='D:\dev\jdk\temurin-21'
-$env:GRADLE_USER_HOME='D:\gradle-home'
-.\gradlew build
-```
+- 成品：`dist/epca-0.148-1.21.1.jar`（也可在 [Releases](../../releases) 下载）
+- 校验：`dist/SHA256SUMS.txt`
 
-产物：`build\libs\epca-0.148-1.21.1.jar`
+把 jar 放进 `mods/`，并安装 **GeckoLib 4.8.4+（1.21.1 NeoForge）** 即可。
 
-## 运行
-
-```powershell
-.\gradlew runClient     # 客户端
-.\gradlew runServer     # 服务端（run\eula.txt 已置 true）
-.\gradlew runData       # 数据生成
-```
-
-## 需要的运行前置 mod
+## 需要的前置 mod
 
 | mod | 版本 | 必需 |
 |---|---|---|
@@ -34,9 +24,44 @@ $env:GRADLE_USER_HOME='D:\gradle-home'
 
 `yawning_neko_api`（伤害适应系统）已作为源码内嵌进本 jar，**不需要**单独安装。
 
+## 构建
+
+需要 JDK 21（`JAVA_HOME` 指向它）。
+
+```bash
+./gradlew build
+```
+
+产物：`build/libs/epca-0.148-1.21.1.jar`
+
+> 上游仓库把 datagen 产物提交在 `src/generated/resources`，本仓库保持同样结构；
+> 如果你只拷贝 `src/main` 会丢语言文件与大量模型/粒子定义（血泪教训，见移植报告 §7.11）。
+
+## 运行 / 开发
+
+```bash
+./gradlew runClient     # 客户端
+./gradlew runServer     # 服务端（需 run/eula.txt）
+./gradlew runData       # 数据生成
+```
+
+## 仓库结构
+
+```
+src/main/java/org/tdddd/epca/**              移植后的模组源码（698 → 707 类）
+src/main/java/org/tdddd/yawning_neko_api/**  上游前置库的源码内嵌移植（25 类）
+src/main/java/org/tdddd/epca_physics/**      epca_physics 兼容层（3 类）
+src/main/resources/**                        手写资源 + mixin/AT 配置
+src/generated/resources/**                   datagen 产物（语言、模型、blockstate、粒子、配方…）
+src/main/templates/META-INF/neoforge.mods.toml  1.21 模组元数据模板
+dist/                                        成品 jar + SHA-256
+PORTING-REPORT.md                            完整移植报告（依赖决策/已知限制/排错记录）
+```
+
 ## 文档
 
-- 完整移植说明、依赖决策、已知限制、排错记录：[PORTING-REPORT.md](PORTING-REPORT.md)
+- 完整移植说明、依赖决策、已知限制、逐条排错记录：[PORTING-REPORT.md](PORTING-REPORT.md)
+- 非官方声明与第三方内容：[NOTICE.md](NOTICE.md)
 
 ## 已知限制（摘要）
 
@@ -44,4 +69,4 @@ $env:GRADLE_USER_HOME='D:\gradle-home'
 2. eej 祭坛联动关闭 —— `eej` 为可选依赖，无 1.21.1 产物。
 3. 旧 1.20.1 存档中的物品 NBT / 属性修饰符不迁移（1.21 改为 DataComponents / ResourceLocation id）。
 4. 网络协议与 1.20.1 客户端不兼容（NeoForge CustomPacketPayload）。
-5. 首次修复了两类真机崩溃：渲染优化 mod 下的 `@Redirect` 冲突（改用 `@WrapOperation`）、未装 Player Animator 时的 `NoClassDefFoundError`（已隔离为可选依赖）。详见 PORTING-REPORT.md §7.9/§7.10。
+5. 4 个模块物品使用占位图标（上游无贴图）。
