@@ -1,0 +1,9 @@
+{
+  "fins_to": "epca:infested_wolf",
+  "from": "minecraft:wolf",
+  "meat_particles": false,
+  "mozzie_to": "epca:infested_wolf",
+  "priority": 1,
+  "small_entity_priority": true,
+  "to": "epca:infested_wolf"
+}

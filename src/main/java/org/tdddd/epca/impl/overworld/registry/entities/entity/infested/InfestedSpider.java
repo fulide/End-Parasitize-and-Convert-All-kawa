@@ -647,15 +647,6 @@ public class InfestedSpider extends PathfinderMob implements GeoEntity, IParasit
             setShooting(false);
         }
 
-        // TEMPORARY climb diagnosis (see the report). Every 10 ticks, so we can settle from evidence
-        // whether the climb STATE ever becomes true for this mob. Remove once diagnosed.
-        if (this.tickCount % 10 == 0) {
-            org.tdddd.epca.impl.epca.LOGGER.info(
-                    "[climb-diag][spider] nearWall={} target={} cd={} climbing={} onClimbable={} y={} inWeb={}",
-                    this.isNearWall(), this.getTarget() != null, this.climbCooldown,
-                    this.isClimbingWall(), this.onClimbable(), this.getY(),
-                    isStandingInInfestedWeb(this));
-        }
 
         boolean chasing = this.getTarget() != null;
         setRunning(chasing && this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D);

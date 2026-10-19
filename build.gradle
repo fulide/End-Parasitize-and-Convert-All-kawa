@@ -102,6 +102,12 @@ tasks.withType(Jar).configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+// src/main/resources and src/generated/resources intentionally overlap (shipped datagen output plus
+// hand-written resources). Keep the first occurrence, exactly like the 1.20.1 build did.
+tasks.named('processResources').configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 idea {
     module {
         downloadSources = true

@@ -1,0 +1,21 @@
+{
+  "type": "eej:soul_fire_purification",
+  "burn_chance": 0.7,
+  "ingredient": {
+    "item": "epca:infested_heavy_tiles_stairs"
+  },
+  "results": [
+    {
+      "chance": 0.3,
+      "items": [
+        "minecraft:deepslate_tile_stairs"
+      ]
+    }
+  ],
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "eej"
+    }
+  ]
+}

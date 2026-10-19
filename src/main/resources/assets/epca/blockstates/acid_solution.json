@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "level=10": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=13": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=1": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=0": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=9": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=6": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=3": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=15": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=14": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=5": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=8": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=7": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=12": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=2": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=11": {
+      "model": "epca:block/acid_solution"
+    },
+    "level=4": {
+      "model": "epca:block/acid_solution"
+    }
+  }
+}

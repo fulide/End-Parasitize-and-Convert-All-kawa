@@ -516,14 +516,6 @@ public class WalkingSpiderHead extends PathfinderMob implements GeoEntity, IPara
             setPouncing(false);
         }
 
-        // TEMPORARY climb diagnosis (see the report). Every 10 ticks, so we can settle from evidence
-        // whether the climb STATE ever becomes true for the head. Remove once diagnosed.
-        if (this.tickCount % 10 == 0) {
-            org.tdddd.epca.impl.epca.LOGGER.info(
-                    "[climb-diag][head] nearWall={} target={} cd={} climbing={} onClimbable={} y={}",
-                    this.isNearWall(), this.getTarget() != null, this.climbCooldown,
-                    this.isClimbingWall(), this.onClimbable(), this.getY());
-        }
         // Ripper's climb tick, copied: run the cooldown down, then stop the ascent when walled in
         // from above, so the mob does not creep up a wall forever.
         if (this.climbCooldown > 0) {

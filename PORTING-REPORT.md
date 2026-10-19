@@ -122,6 +122,8 @@ AbstractArrow setPierceLevel(B)V
 | 6 | GeckoLib 4.8 渲染细节 | 若干旧 5 参 `applyRotations` 覆盖在 4.8 中本就不会被调用（本次改为 6 参，属修复） | 上游 API 变化 |
 | 7 | **不装 Player Animator 时无玩家动画** | 长矛突刺、击杀法杖的第三人称/第一人称动画不播放；其余玩法正常 | 该依赖改为 **optional**，缺失时 `PlayerAnimSupport.available() == false` 直接跳过（见 §7.10） |
 | 8 | 渲染类 mod 下部分客户端特效可能降级 | 例如别的 mod 占用了同一渲染调用时，本 mod 的着色层/闪电染色会**静默不生效**（不再崩溃） | 客户端 mixin 配置 `defaultRequire: 0`，失败即降级 |
+| 9 | 4 个模块物品使用**占位图标** | `flesh_armor_module_i` / `feeding_module_i` / `flight_module_i` / `netherite_module_i` 在源仓库里没有任何模型/贴图，本次生成了 16×16 占位图 | 上游资源缺失；有正式美术后直接替换 `assets/epca/textures/item/<id>.png` 即可 |
+| 10 | `liquid_biomass` / `magic_reflector` 等为**孤儿资源** | 代码里已无对应方块，永远不会被加载（无报错） | 历史遗留，可安全删除 |
 
 > 以上均已在源码注释中标注；不影响主玩法（感染、转化、进化、巢穴首领、器官系统）。
 
@@ -173,6 +175,25 @@ cd D:\dev\projects\epca-1.21.1
     修复：把所有 PAL 用法收敛到 `impl/compat/PlayerAnimCompat`（唯一引用 `dev.kosmx.*` 的类），并新增不含任何 PAL 引用的探针 `PlayerAnimSupport.available()`；
     `@EventBusSubscriber` 的 `events/PlayerAnimator` 删除，改为 `ClientSetup` 里 `if (PlayerAnimSupport.available()) PlayerAnimCompat.registerFactories();`。
     现在**不装 Player Animator 也能正常启动**（只是长矛/击杀法杖的玩家动画不播放），`neoforge.mods.toml` 里该依赖为 `optional`。
+11. **🔴 材质与语言"全部丢失"（真机现象已修复）—— 根因是 `src/generated/resources` 没被复制**
+    现象：创造模式标签页标题显示 `itemGroup.epca.main_tab`、物品提示 `item.epca.parasite_viscera`，大量物品是紫黑格。
+    根因：原工程把 **datagen 产物提交在 `src/generated/resources`**（671 个文件：185 个物品模型 + 150 个方块模型 + 87 个 blockstate + 2 个语言文件 + 12 个粒子定义 + 配方/进度/标签），
+    首次移植只复制了 `src/main/{java,resources}`，于是：
+    - 语言文件整个缺失（`assets/epca/lang/*.json` 根本不存在）⇒ 所有键显示原文；
+    - 手写模型只有 82 个（长矛等），其余 185 个物品模型缺失 ⇒ 紫黑格；
+    - 87 个 blockstate、150 个方块模型、12 个粒子定义缺失 ⇒ 方块无模型 + 粒子创建 NPE（`SplashiParticle` 的 `this.sprites is null`）。
+    修复：完整复制 `src/generated/resources`（排除 `.cache`），并做 1.21 适配：
+    - 目录单数化：`advancements→advancement`、`recipes→recipe`、`tags/blocks|items|entity_types→tags/block|item|entity_type`、`forge/tags/items→c/tags/item`；
+    - 结果字段：`"result": {"item": ...}` → `{"id": ...}`，**并且 12 个熔炼/高炉配方是裸字符串 `"result": "epca:copper_nugget"`，1.21 非法** → 统一改成 `{"id": ...}`；
+    - 条件：`"conditions": [{"type":"forge:mod_loaded"...}]` → `"neoforge:conditions": [{"type":"neoforge:mod_loaded"...}]`（仅 113 个 eej 灵魂火配方）；
+    - `build.gradle` 给 `processResources` 加 `duplicatesStrategy = EXCLUDE`（main 与 generated 有意重叠）。
+12. **🔴 缺失/损坏的资源（已补）**
+    - `epca:acid_solution` 没有 blockstate 文件 → 每个 `level=0..15` 都报 "missing model for variant"，补齐 16 变体 blockstate；
+    - 该方块的模型只有 `{"parent":"minecraft:block/cube_all"}`（无贴图，非法）→ 改为流体式 `{"textures":{"particle":"epca:block/acid"}}`；
+    - 4 个模块物品（`flesh_armor_module_i` / `feeding_module_i` / `flight_module_i` / `netherite_module_i`）在源仓库里**既无模型也无贴图** → 本次生成占位图标 + 模型（**占位美术**，见 §5.9）；
+    - 91 个音效缺 `subtitles.epca.*` 翻译键（每个都刷一条 ERROR）→ 自动补英文/中文键；
+    - 2 个生物质刷怪蛋缺 `item.epca.*` 语言键 → 补上。
+13. **🔴 日志刷屏（真机上把日志刷到 2.9 MB）** —— 实体移植时留下了 `[climb-diag][spider]` 临时诊断，每个蜘蛛每 10 tick 打一条 INFO。已全部删除（`InfestedSpider` / `WalkingSpiderHead`）。
 
 ---
 

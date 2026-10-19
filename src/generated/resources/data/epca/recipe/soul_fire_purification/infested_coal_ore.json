@@ -1,0 +1,17 @@
+{
+  "type": "eej:soul_fire_purification",
+  "explode": {
+    "blindness_ticks": 100,
+    "fire": false,
+    "power": 4.0
+  },
+  "ingredient": {
+    "item": "epca:infested_coal_ore"
+  },
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "eej"
+    }
+  ]
+}
