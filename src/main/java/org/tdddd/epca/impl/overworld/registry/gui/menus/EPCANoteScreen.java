@@ -470,8 +470,32 @@ public class EPCANoteScreen extends Screen {
     }
 
 
+    /**
+     * 1.21 replaced the plain darkening gradient of 1.20.1 with a gaussian blur plus the
+     * "menu background" texture. Both are painted by {@link net.minecraft.client.gui.screens.Screen#render},
+     * which this screen used to call <em>after</em> drawing the book - so the blur and the brown menu
+     * texture were smeared over the pages (reported as "the note GUI has a blur layer").
+     *
+     * <p>Restore the 1.20.1 look: one translucent dark gradient, painted once, before any content.</p>
+     */
+    @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        if (this.minecraft != null && this.minecraft.level != null) {
+            guiGraphics.fillGradient(0, 0, this.width, this.height, 0xC0101010, 0xD0101010);
+        } else {
+            this.renderMenuBackground(guiGraphics);
+        }
+        // Keep the NeoForge hook alive even though vanilla's renderBackground() is bypassed.
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(
+                new net.neoforged.neoforge.client.event.ScreenEvent.BackgroundRendered(this, guiGraphics));
+    }
+
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Painted first so nothing is drawn on top of the pages; super.render() is not used below
+        // because it would paint the 1.21 blurred background over the already rendered book.
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+
         float scale = getScaleFactor();
         var pose = guiGraphics.pose();
         pose.pushPose();
@@ -536,7 +560,10 @@ public class EPCANoteScreen extends Screen {
 
         drawFooter(guiGraphics, hoveredParent, hoveredChild);
 
-        super.render(guiGraphics, (int) layoutX, (int) layoutY, partialTick);
+        // Equivalent of Screen#render minus its background pass (which is already painted above).
+        for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
+            renderable.render(guiGraphics, (int) layoutX, (int) layoutY, partialTick);
+        }
 
         pose.popPose();
     }

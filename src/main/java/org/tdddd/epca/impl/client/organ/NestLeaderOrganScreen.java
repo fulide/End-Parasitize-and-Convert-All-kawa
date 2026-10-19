@@ -1144,7 +1144,11 @@ public class NestLeaderOrganScreen extends Screen {
         //  super.render  super.renderBackground 1.20.1  Screen
         //  addRenderableWidget
         //   layoutMouseX/Y
-        super.render(graphics, mouseX, mouseY, partialTick);
+        // 1.21's Screen#render would paint its blurred background + menu texture a SECOND time,
+        // over the already drawn panel, so only the widgets are rendered here.
+        for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
+            renderable.render(graphics, mouseX, mouseY, partialTick);
+        }
 
         graphics.pose().popPose();
         if (scissor) {

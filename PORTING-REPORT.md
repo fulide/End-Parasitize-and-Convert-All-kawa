@@ -239,6 +239,18 @@ cd D:\dev\projects\epca-1.21.1
     `rejectsDirt=true`、`shiftClickToFuel=true`（6 个全部进入 1 号槽）。菜单其余逻辑（费用计算、`clickMenuButton` 的消耗、
     `getGoldCount()`）只清点数量、不校验物品 id，因此不需要额外 hook。
 
+18. **🔴 寄巢笔记（`epca:epca_note`）GUI 被整层模糊（已修复）**
+    1.21 把 `Screen#renderBackground` 从"1.20.1 的纯半透明渐变"换成了**高斯模糊 + 菜单背景贴图**
+    （`renderBlurredBackground` + `renderMenuBackground`），而 `Screen#render` 会先画背景再画控件。
+    这两个 GUI 的 `render` 是**先画书页/面板、最后才调用 `super.render`**（1.20.1 时代也这么写，但那时背景只是一层
+    半透明渐变，盖上去不明显），于是 1.21 里模糊和那张棕色菜单贴图被**糊在书页上面** → 用户看到"打开笔记有一层模糊"。
+    修复：
+    - `EPCANoteScreen` 覆写 `renderBackground` 为 1.20.1 的等价实现（`fillGradient(0,0,w,h,0xC0101010,0xD0101010)`，
+      非游戏内退回菜单背景），在 `render` 开头脑后画一次，然后**不再调用 `super.render`**，改为自己遍历
+      `renderables` 渲染按钮（`Screen#render` 的实现就是"背景 + 遍历控件"，只跳过背景那一半）；
+      同时补发 `ScreenEvent.BackgroundRendered`，避免依赖该事件的 mod 失效。
+    - `NestLeaderOrganScreen` 同样在开头画背景、结尾 `super.render` 会二次糊面板；改为只遍历 `renderables`。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。
