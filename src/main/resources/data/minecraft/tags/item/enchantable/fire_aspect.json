@@ -1,0 +1,13 @@
+{
+  "values": [
+    "epca:wooden_spear",
+    "epca:stone_spear",
+    "epca:flint_spear",
+    "epca:copper_spear",
+    "epca:iron_spear",
+    "epca:golden_spear",
+    "epca:diamond_spear",
+    "epca:netherite_spear"
+  ],
+  "replace": false
+}

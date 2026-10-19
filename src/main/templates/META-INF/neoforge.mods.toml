@@ -1,0 +1,44 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "MIT License"
+issueTrackerURL = "https://github.com/tddddasd/End-Parasitize-and-Convert-All/issues"
+
+[[mixins]]
+config = "epca.mixins.json"
+
+[[mods]]
+modId = "epca"
+version = "${mod_version}"
+displayName = "End-Parasitize and Convert All"
+displayURL = "https://space.bilibili.com/1446970336"
+logoFile = "epca_icon.png"
+authors = "-Yawning喵喵子-"
+description = '''An infection Mod.'''
+
+[[dependencies.epca]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.epca]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.epca]]
+modId = "geckolib"
+type = "required"
+versionRange = "[4.8,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.epca]]
+modId = "playeranimator"
+type = "optional"
+versionRange = "[2.0,)"
+ordering = "NONE"
+side = "BOTH"

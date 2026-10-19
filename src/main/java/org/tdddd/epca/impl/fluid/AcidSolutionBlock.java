@@ -1,0 +1,160 @@
+package org.tdddd.epca.impl.fluid;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.neoforged.neoforge.fluids.FluidType;
+import org.tdddd.epca.impl.overworld.registry.ModEffects;
+import org.tdddd.epca.impl.overworld.registry.entities.IParasite;
+import org.tdddd.epca.impl.network.ModNetwork;
+import org.tdddd.epca.impl.network.packet.s2c.AcidWaterColorPacket;
+import org.tdddd.yawning_neko_api.damages.ModDamageTypes;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+public class AcidSolutionBlock extends LiquidBlock {
+    /**
+     * 1.21.1 made {@link LiquidBlock} take the {@link FlowingFluid} instance directly (it dereferences it in the
+     * constructor to build its state cache), so the primary constructor changed from {@code Supplier} to
+     * {@code FlowingFluid}. The old supplier signature is kept as an overload for existing call sites; it resolves the
+     * fluid eagerly, which is safe because fluids are registered before blocks.
+     */
+    public AcidSolutionBlock(FlowingFluid fluid, Properties properties) {
+        super(fluid, properties);
+    }
+
+    public AcidSolutionBlock(Supplier<? extends FlowingFluid> fluid, Properties properties) {
+        this(fluid.get(), properties);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+
+        if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+            
+            List<BlockPos> affectedWaters = findWaterInRange(level, pos, 8);
+
+            
+            for (BlockPos waterPos : affectedWaters) {
+                int distance = Math.abs(pos.getX() - waterPos.getX()) +
+                        Math.abs(pos.getY() - waterPos.getY()) +
+                        Math.abs(pos.getZ() - waterPos.getZ());
+
+                AcidWaterColorPacket packet = new AcidWaterColorPacket(
+                        waterPos, pos, distance, true
+                );
+
+                ModNetwork.sendToAll(packet);
+            }
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        super.onRemove(state, level, pos, newState, isMoving);
+
+        if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+            
+            List<BlockPos> affectedWaters = findWaterInRange(level, pos, 8);
+
+            
+            for (BlockPos waterPos : affectedWaters) {
+                AcidWaterColorPacket packet = new AcidWaterColorPacket(
+                        waterPos, pos, 0, false
+                );
+
+                ModNetwork.sendToAll(packet);
+            }
+        }
+    }
+
+    
+    private List<BlockPos> findWaterInRange(Level level, BlockPos center, int range) {
+        List<BlockPos> result = new ArrayList<>();
+
+        for (int dx = -range; dx <= range; dx++) {
+            for (int dy = -range; dy <= range; dy++) {
+                for (int dz = -range; dz <= range; dz++) {
+                    if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > range) continue;
+
+                    BlockPos checkPos = center.offset(dx, dy, dz);
+                    FluidState fluidState = level.getFluidState(checkPos);
+
+                    if (fluidState.getType() == Fluids.WATER ||
+                            fluidState.getType() == Fluids.FLOWING_WATER) {
+                        result.add(checkPos);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        super.entityInside(state, level, pos, entity);
+
+        
+        if (!level.isClientSide && entity instanceof LivingEntity livingEntity) {
+            if (!IParasite.isParasiteByTagOrInterface(livingEntity)
+                    && EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(entity)) {
+                applyAcidSolutionEffects(livingEntity);
+            }
+        }
+    }
+
+    private void applyAcidSolutionEffects(LivingEntity entity) {
+        Level level = entity.level();
+
+        if (level.getGameTime() % 5 == 0) {
+            
+            // 1.21.1: MobEffect is registry-held, so MobEffectInstance takes the Holder directly — never .get().
+            entity.addEffect(new MobEffectInstance(
+                    ModEffects.COTH,
+                    1200, 
+                    1,    
+                    false,
+                    true
+            ));
+
+            
+            entity.addEffect(new MobEffectInstance(
+                    ModEffects.CORROSIVE,
+                    300, 
+                    0,   
+                    false,
+                    true
+            ));
+
+            
+            entity.hurt(entity.damageSources().magic(), 1.0F);
+
+            Registry<DamageType> registry = level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE);
+            Holder<DamageType> holder = registry.getHolderOrThrow(ModDamageTypes.MINIMUM);
+            DamageSource minimumSource = new DamageSource(holder);
+            entity.hurt(minimumSource, 0.25F);
+        }
+    }
+
+    public FluidType getFluidType() {
+        return ModFluids.ACID_SOLUTION_FLUID_TYPE.get();
+    }
+}

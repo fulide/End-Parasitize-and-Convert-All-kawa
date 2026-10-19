@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": {
+      "tag": "c:infested_flesh"
+    },
+    "C": {
+      "item": "minecraft:clock"
+    }
+  },
+  "pattern": [
+    " I ",
+    "ICI",
+    " I "
+  ],
+  "result": {
+    "id": "epca:erosion_clock",
+    "count": 1
+  }
+}

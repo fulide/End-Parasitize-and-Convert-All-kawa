@@ -1,0 +1,13 @@
+{
+  "values": [
+    "epca:infested_drowned",
+    "epca:walking_drowned_head",
+    "epca:stage_i_beckon",
+    "epca:stage_ii_beckon",
+    "epca:fins",
+    "epca:reshape_longarms",
+    "epca:bio_tort_incarnation",
+    "epca:yawning_nya"
+  ],
+  "replace": false
+}

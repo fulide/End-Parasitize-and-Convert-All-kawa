@@ -1,0 +1,184 @@
+package org.tdddd.epca.impl.client;
+
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.CustomData;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import org.tdddd.epca.impl.client.block.InfestedSweetBerryBushGlowRenderer;
+import org.tdddd.epca.impl.client.entity.EpcaGeoRenderer;
+import org.tdddd.epca.impl.client.entity.gas.GasCloudRenderType;
+import org.tdddd.epca.impl.client.entity.model.*;
+import org.tdddd.epca.impl.client.entity.renderer.*;
+import org.tdddd.epca.impl.overworld.registry.blocks.ModBlockEntities;
+import org.tdddd.epca.impl.overworld.registry.blocks.gen.model.SwallowCystModel;
+import org.tdddd.epca.impl.overworld.registry.entities.EpcaEntityManager;
+import org.tdddd.epca.impl.epca;
+import org.tdddd.epca.impl.overworld.registry.ModEntities;
+import org.tdddd.epca.impl.overworld.registry.ModItems;
+import software.bernie.geckolib.renderer.GeoBlockRenderer;
+
+import java.io.IOException;
+import java.util.Map;
+import net.neoforged.fml.common.EventBusSubscriber;
+
+/**
+ * Mod-bus client subscribers: entity renderer registration, client setup and the custom core shaders.
+ *
+ * <p>Every handler here receives a {@code net.neoforged.fml.event.IModBusEvent}, so the class
+ * is annotated with {@code Bus.MOD}. Forge-bus client work (client ticking) lives in
+ * {@link ClientEvents}, which keeps the default bus.</p>
+ */
+@EventBusSubscriber(modid = epca.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+public class ClientHandler {
+    @SubscribeEvent
+    public static void onRegisterRenderers(final EntityRenderersEvent.RegisterRenderers event) {
+
+        //  Auto-registered renderers (all entities via EpcaEntityManager.registerMobWithRender)
+        // These use EpcaTypeGeoRenderer + EpcaTypeGeoModel  reads model/texture/animation
+        // from EpcaEntityManager by entity type. No per-entity model class needed.
+        for (EntityType<?> type : EpcaEntityManager.consumeRenderTypes()) {
+            if (type == ModEntities.RESHAPE_YELLOWEYE.get()) {
+                // Has a dedicated renderer below (it needs the shader-rendered gas cloud layer).
+                // Registering the generic renderer as well would register this entity type twice.
+                continue;
+            }
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            EntityType rawType = type;
+            event.registerEntityRenderer(rawType, EpcaGeoRenderer::new);
+        }
+
+        //  Custom renderers ONLY (entities with special rendering: non-GeckoLib, shaders, etc.)
+        event.registerEntityRenderer(ModEntities.CONTAMINATED_WATER.get(), ContaminatedWaterRenderer::new);
+        event.registerEntityRenderer(ModEntities.YAWNING_NYA.get(), YawningNyaRenderer::new);
+        event.registerEntityRenderer(ModEntities.BIO_TORT_INCARNATION.get(), BioTortIncarnationRenderer::new);
+        event.registerEntityRenderer(ModEntities.BONE_FRAGMENT.get(), BoneFragmentRenderer::new);
+        event.registerEntityRenderer(ModEntities.INFESTED_ENDER_PEARL.get(), InfestedThrownEnderPearlRenderer::new);
+        event.registerEntityRenderer(ModEntities.INFESTED_SPIDER_WEB_PROJECTILE.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntities.INFESTED_SPIDER_WEB_BLOOD_PROJECTILE.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntities.INFESTED_CAVE_SPIDER_WEB_PROJECTILE.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntities.INFESTED_ENDERMAN.get(), InfestedEndermanRenderer::new);
+        event.registerEntityRenderer(ModEntities.INFESTED_ENDERMITE.get(), InfestedEndermiteRenderer::new);
+        event.registerEntityRenderer(ModEntities.WALKING_ENDERMAN_HEAD.get(), WalkingEndermanHeadRenderer::new);
+        event.registerEntityRenderer(ModEntities.INFESTED_ZOMBIE.get(), InfestedZombieRenderer::new);
+        event.registerEntityRenderer(ModEntities.RESHAPE_LONGARMS.get(), ReshapeLongarmsRenderer::new);
+        event.registerEntityRenderer(ModEntities.RESHAPE_YELLOWEYE.get(), ReshapeYelloweyeRenderer::new);
+        event.registerEntityRenderer(ModEntities.RESHAPE_PART.get(), ReshapeLongarmsCustomPartRenderer::new);
+        event.registerEntityRenderer(ModEntities.INFESTED_BAT.get(), InfestedBatRenderer::new);
+
+        event.registerEntityRenderer(ModEntities.RIPPER.get(), ctx -> new EpcaGeoRenderer<>(ctx, new RipperModel()));
+        event.registerEntityRenderer(ModEntities.FINS.get(), ctx -> new EpcaGeoRenderer<>(ctx, new FinsModel()));
+        event.registerEntityRenderer(ModEntities.LIGHT_CARRIER.get(), ctx -> new EpcaGeoRenderer<>(ctx, new LightCarrierModel()));
+        event.registerEntityRenderer(ModEntities.INFESTED_FOX.get(), ctx -> new EpcaGeoRenderer<>(ctx, new InfestedFoxModel()));
+        event.registerEntityRenderer(ModEntities.WALKING_FOX_HEAD.get(), ctx -> new EpcaGeoRenderer<>(ctx, new WalkingFoxHeadModel()));
+        event.registerEntityRenderer(ModEntities.INFESTED_SKELETON.get(), ctx -> new EpcaGeoRenderer<>(ctx, new InfestedSkeletonModel()));
+        event.registerEntityRenderer(ModEntities.WALKING_SKELETON_HEAD.get(), ctx -> new EpcaGeoRenderer<>(ctx, new WalkingSkeletonHeadModel()));
+        // Variant spiders: the three variants share one model/animation file each and only differ in
+        // the texture, which the model reads back from the entity.
+        event.registerEntityRenderer(ModEntities.INFESTED_SPIDER.get(), ctx -> new EpcaGeoRenderer<>(ctx, new InfestedSpiderModel()));
+        event.registerEntityRenderer(ModEntities.WALKING_SPIDER_HEAD.get(), ctx -> new EpcaGeoRenderer<>(ctx, new WalkingSpiderHeadModel()));
+
+        event.registerEntityRenderer(ModEntities.THROWN_WOODEN_SPEAR.get(), ThrownWoodenSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.THROWN_STONE_SPEAR.get(), ThrownStoneSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.THROWN_FLINT_SPEAR.get(), ThrownFlintSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.THROWN_COPPER_SPEAR.get(), ThrownCopperSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.THROWN_IRON_SPEAR.get(), ThrownIronSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.THROWN_GOLDEN_SPEAR.get(), ThrownGoldenSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.THROWN_DIAMOND_SPEAR.get(), ThrownDiamondSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.THROWN_NETHERITE_SPEAR.get(), ThrownNetheriteSpearRenderer::new);
+        event.registerEntityRenderer(ModEntities.ACID_BULLET.get(), AcidBulletRenderer::new);
+        event.registerEntityRenderer(ModEntities.BONE_ARROW.get(), BoneArrowRenderer::new);
+        event.registerEntityRenderer(ModEntities.BIOMASS_EGG.get(), BiomassEggRenderer::new);
+        //  Phase 3
+        //  epca_physics  SubLevelWorldRenderer
+
+        event.registerBlockEntityRenderer(ModBlockEntities.SWALLOW_CYST.get(), ctx -> new GeoBlockRenderer<>(new SwallowCystModel()));
+        // age=3 InfestedSweetBerryBushGlowRenderer
+        //  JSON
+        event.registerBlockEntityRenderer(ModBlockEntities.INFESTED_SWEET_BERRY_BUSH.get(),
+                InfestedSweetBerryBushGlowRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {        event.enqueueWork(() -> {
+            ItemProperties.register(ModItems.SWALLOW_CYST.get(),
+                    ResourceLocation.fromNamespaceAndPath(epca.MODID, "living"),
+                    (stack, level, entity, seed) -> {
+                        CompoundTag tag = customTag(stack);
+                        if (tag != null && tag.contains("Living")) {
+                            return tag.getBoolean("Living") ? 1.0f : 0.0f;
+                        }
+                        return 1.0f;
+                    });
+            ItemProperties.register(ModItems.INFESTED_SWEET_BERRY_BUSH.get(), ResourceLocation.fromNamespaceAndPath("epca", "age"),
+                    (stack, level, entity, seed) -> {
+                CompoundTag tag = customTag(stack);
+                if (tag != null && tag.contains("age")) {
+                    return tag.getInt("age");
+                }
+                return 1;
+            });
+
+            
+            
+            registerThrowingProperty(ModItems.WOODEN_SPEAR.get());
+            registerThrowingProperty(ModItems.STONE_SPEAR.get());
+            registerThrowingProperty(ModItems.FLINT_SPEAR.get());
+            registerThrowingProperty(ModItems.COPPER_SPEAR.get());
+            registerThrowingProperty(ModItems.IRON_SPEAR.get());
+            registerThrowingProperty(ModItems.GOLDEN_SPEAR.get());
+            registerThrowingProperty(ModItems.DIAMOND_SPEAR.get());
+            registerThrowingProperty(ModItems.NETHERITE_SPEAR.get());
+            }
+        );
+    }
+
+    
+    private static void registerThrowingProperty(Item item) {
+        ItemProperties.register(item, ResourceLocation.fromNamespaceAndPath(epca.MODID, "throwing"),
+                (stack, level, entity, seed) ->
+                        entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
+    }
+
+    /**
+     * Reads the legacy custom NBT of a stack. 1.21 removed {@code ItemStack#getTag()}; the equivalent
+     * payload is the {@code minecraft:custom_data} component (old NBT is migrated into it on load).
+     */
+    private static CompoundTag customTag(net.minecraft.world.item.ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data == null ? null : data.copyTag();
+    }
+
+    /**
+     * Builds the custom core shader used by the shader-rendered gas clouds.
+     *
+     * <p>The shader assets live in {@code assets/epca/shaders/core/gas_cloud.json} (plus
+     * {@code gas_cloud.vsh} / {@code gas_cloud.fsh}); the resulting {@link ShaderInstance} is handed
+     * to {@link GasCloudRenderType}, which wraps it in a custom RenderType.</p>
+     *
+     * <p>This MUST be a mod-bus subscriber:
+     * {@code net.neoforged.neoforge.client.event.RegisterShadersEvent} implements
+     * {@code net.neoforged.fml.event.IModBusEvent}, so it is only ever posted to the mod event
+     * bus. Registering it on the forge bus would silently leave the shader unbuilt and the clouds
+     * invisible.</p>
+     */
+    @SubscribeEvent
+    public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
+        ShaderInstance shader = new ShaderInstance(
+                event.getResourceProvider(),
+                ResourceLocation.fromNamespaceAndPath(epca.MODID, "gas_cloud"),
+                com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP);
+        event.registerShader(shader, GasCloudRenderType::registerShader);
+    }
+}
+

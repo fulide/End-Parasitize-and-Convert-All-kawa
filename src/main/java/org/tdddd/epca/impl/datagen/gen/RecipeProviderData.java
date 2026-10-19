@@ -1,0 +1,137 @@
+package org.tdddd.epca.impl.datagen.gen;
+
+import com.google.gson.JsonObject;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.data.PackOutput;
+import net.minecraft.data.recipes.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.ItemLike;
+import net.neoforged.neoforge.common.Tags;
+import net.minecraft.core.registries.BuiltInRegistries;
+import org.jetbrains.annotations.Nullable;
+import org.tdddd.epca.impl.epca;
+import org.tdddd.epca.impl.overworld.registry.ModItems;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+
+
+public class RecipeProviderData extends RecipeProvider {
+    public RecipeProviderData(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        super(output, registries);
+    }
+
+    private static ResourceLocation modId(String path) {
+        return ResourceLocation.fromNamespaceAndPath(epca.MODID, path);
+    }
+    private static Item modItem(String name) {
+        return BuiltInRegistries.ITEM.get(modId(name));
+    }
+
+    @Override
+    protected void buildRecipes(RecipeOutput c) {
+        
+        spearCrafting(c, Items.FLINT,          modItem("flint_spear"));
+        spearCrafting(c, Items.COPPER_INGOT,   modItem("copper_spear"));
+        spearCrafting(c, Items.IRON_INGOT,     modItem("iron_spear"));
+        spearCrafting(c, Items.GOLD_INGOT,     modItem("golden_spear"));
+        spearCrafting(c, Items.DIAMOND,        modItem("diamond_spear"));
+        // wooden/stone use tags, not single items
+        spearCraftingTag(c, ItemTags.PLANKS,            modItem("wooden_spear"));
+        spearCraftingTag(c, ItemTags.STONE_CRAFTING_MATERIALS, modItem("stone_spear"));
+
+        
+        spearRecycling(c, modItem("copper_spear"),  ModItems.COPPER_NUGGET.get(), 0.1F);
+        spearRecycling(c, modItem("iron_spear"),    Items.IRON_NUGGET,  0.1F);
+        spearRecycling(c, modItem("golden_spear"),  Items.GOLD_NUGGET,  0.1F);
+
+        
+        rawRecycling(c, modItem("infested_raw_copper"), ModItems.COPPER_NUGGET.get(), 0.1F);
+        rawRecycling(c, modItem("infested_raw_iron"),   Items.IRON_NUGGET,  0.1F);
+        rawRecycling(c, modItem("infested_raw_gold"),   Items.GOLD_NUGGET,  0.1F);
+
+        
+        netheriteSmithing(c, modItem("diamond_spear"), modItem("netherite_spear"));
+    }
+
+    
+
+    
+    private void spearCrafting(RecipeOutput c, Item material, Item result) {
+        String matName = BuiltInRegistries.ITEM.getKey(material).getPath();
+        String resultName = BuiltInRegistries.ITEM.getKey(result).getPath();
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result)
+                .pattern("W  ").pattern(" S ").pattern("  S")
+                .define('W', material).define('S', Items.STICK)
+                .unlockedBy("has_" + matName, has(material))
+                .save(c, modId(resultName + "_crafting_shaped"));
+    }
+
+    
+    private void spearCraftingTag(RecipeOutput c, TagKey<Item> materialTag, Item result) {
+        String tagPath = materialTag.location().getPath();
+        String resultName = BuiltInRegistries.ITEM.getKey(result).getPath();
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, result)
+                .pattern("W  ").pattern(" S ").pattern("  S")
+                .define('W', materialTag).define('S', Items.STICK)
+                .unlockedBy("has_stick", has(Items.STICK))
+                .save(c, modId(resultName + "_crafting_shaped"));
+    }
+
+    
+
+    
+    private void spearRecycling(RecipeOutput c, Item spear, Item result, float xp) {
+        String spearName = BuiltInRegistries.ITEM.getKey(spear).getPath();
+        String resultName = BuiltInRegistries.ITEM.getKey(result).getPath();
+        String group = "smelting_" + spearName;
+
+        SimpleCookingRecipeBuilder.smelting(Ingredient.of(spear), RecipeCategory.MISC, result, xp, 200)
+                .group(group)
+                .unlockedBy("has_" + spearName, has(spear))
+                .save(c, modId(spearName + "_smelting"));
+
+        SimpleCookingRecipeBuilder.blasting(Ingredient.of(spear), RecipeCategory.MISC, result, xp, 100)
+                .group(group)
+                .unlockedBy("has_" + spearName, has(spear))
+                .save(c, modId(spearName + "_blasting"));
+    }
+
+    
+    private void rawRecycling(RecipeOutput c, Item raw, Item result, float xp) {
+        String rawName = BuiltInRegistries.ITEM.getKey(raw).getPath();
+        String resultName = BuiltInRegistries.ITEM.getKey(result).getPath();
+        String group = "smelting_" + rawName;
+
+        SimpleCookingRecipeBuilder.smelting(Ingredient.of(raw), RecipeCategory.MISC, result, xp, 200)
+                .group(group)
+                .unlockedBy("has_" + rawName, has(raw))
+                .save(c, modId(rawName + "_smelting"));
+
+        SimpleCookingRecipeBuilder.blasting(Ingredient.of(raw), RecipeCategory.MISC, result, xp, 100)
+                .group(group)
+                .unlockedBy("has_" + rawName, has(raw))
+                .save(c, modId(rawName + "_blasting"));
+    }
+
+    
+
+    
+    private void netheriteSmithing(RecipeOutput c, Item base, Item result) {
+        String resultName = BuiltInRegistries.ITEM.getKey(result).getPath();
+        SmithingTransformRecipeBuilder.smithing(
+                        Ingredient.of(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
+                        Ingredient.of(base),
+                        Ingredient.of(Items.NETHERITE_INGOT),
+                        RecipeCategory.COMBAT, result)
+                .unlocks("has_netherite_ingot", has(Items.NETHERITE_INGOT))
+                .save(c, modId(resultName + "_smithing"));
+    }
+}
