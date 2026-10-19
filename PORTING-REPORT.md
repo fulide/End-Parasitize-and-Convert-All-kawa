@@ -268,6 +268,19 @@ cd D:\dev\projects\epca-1.21.1
     验证（专用服务端 + RCON）：假死中 `/kill` → `removed=true`；0 血僵死态 `/kill` → `removed=true`；
     12 连杀全部正常死亡（不再残留假死）。
 
+20. **🔴 抛射物在区块卸载/存档时报 `Cannot encode empty ItemStack`（已修复）**
+    日志特征：`entity.epca.biomass_egg has thrown an exception trying to write state ... Cannot encode empty ItemStack`
+    → `AbstractArrow.addAdditionalSaveData`（`AbstractArrow.java:529`）。
+    根因：`BiomassEgg` 与 `BoneArrow` 都把"拾取物"写成 `ItemStack.EMPTY`（`getDefaultPickupItem()` 返回空 + 构造器传空）。
+    1.20.1 里 `ItemStack#save` 允许空堆栈（写成 `{}`），**1.21 改成抛异常**，于是这两个实体只要被存档就会失败并丢失，
+    每次区块卸载都会刷一次 ERROR。
+    修复（两个类同样处理）：
+    - 构造器与 `getDefaultPickupItem()` / `getPickupItem()` 改为返回非空占位堆栈（蛋 → `minecraft:egg`，骨箭 → `minecraft:arrow`）；
+      这两个实体本身 `pickup = CREATIVE_ONLY`，占位物不会被玩家拿到；
+    - 覆写 `addAdditionalSaveData`，若拾取堆栈为空则先补回占位物，**保证任何路径都不会把空堆栈交给序列化器**。
+    验证（RCON）：`biomass_egg: OK item={count:1,id:"minecraft:egg"}` / `bone_arrow: OK item={count:1,id:"minecraft:arrow"}`
+    / 无射手构造路径同样 OK；服务端日志不再出现 `Cannot encode` / `EntityStorage` 异常。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。

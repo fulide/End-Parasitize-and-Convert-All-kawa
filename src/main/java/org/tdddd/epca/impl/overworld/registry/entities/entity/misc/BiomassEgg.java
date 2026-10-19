@@ -41,7 +41,7 @@ public class BiomassEgg extends AbstractArrow implements GeoEntity, IMotionAlign
     }
 
     public BiomassEgg(Level level, LivingEntity shooter) {
-        super(ModEntities.BIOMASS_EGG.get(), shooter, level, ItemStack.EMPTY, null); 
+        super(ModEntities.BIOMASS_EGG.get(), shooter, level, EPCA_PICKUP_ICON.copy(), null); 
         this.setNoGravity(false); 
     }
 
@@ -129,15 +129,28 @@ public class BiomassEgg extends AbstractArrow implements GeoEntity, IMotionAlign
         }
     }
 
+    /** 1.21's ItemStack#save throws "Cannot encode empty ItemStack", so the arrow always carries a
+     *  non-empty pickup stack even though it is never handed to a player (pickup stays CREATIVE_ONLY).
+     *  1.20.1 tolerated the empty stack. */
+    private static final ItemStack EPCA_PICKUP_ICON = new ItemStack(net.minecraft.world.item.Items.EGG);
+
     @Override
     protected ItemStack getDefaultPickupItem() {
-        return ItemStack.EMPTY;
+        return EPCA_PICKUP_ICON.copy();
     }
 
     @Override
     protected ItemStack getPickupItem() {
-        
-        return ItemStack.EMPTY;
+        return EPCA_PICKUP_ICON.copy();
+    }
+
+    /** Belt and braces: an empty pickup stack must never reach the chunk serialiser. */
+    @Override
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        if (this.getPickupItemStackOrigin().isEmpty()) {
+            this.setPickupItemStack(EPCA_PICKUP_ICON.copy());
+        }
+        super.addAdditionalSaveData(tag);
     }
 
 

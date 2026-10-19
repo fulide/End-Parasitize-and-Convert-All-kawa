@@ -36,7 +36,7 @@ public class BoneArrow extends AbstractArrow implements GeoEntity, IMotionAligne
     }
 
     public BoneArrow(Level level, LivingEntity shooter) {
-        super(ModEntities.BONE_ARROW.get(), shooter, level, ItemStack.EMPTY, null);
+        super(ModEntities.BONE_ARROW.get(), shooter, level, EPCA_PICKUP_ICON.copy(), null);
         this.setNoGravity(false);
         this.setBaseDamage(8.0F); 
     }
@@ -112,15 +112,28 @@ public class BoneArrow extends AbstractArrow implements GeoEntity, IMotionAligne
         }
     }
 
+    /** 1.21's ItemStack#save throws "Cannot encode empty ItemStack", so the arrow always carries a
+     *  non-empty pickup stack even though it is never handed to a player (pickup stays CREATIVE_ONLY).
+     *  1.20.1 tolerated the empty stack. */
+    private static final ItemStack EPCA_PICKUP_ICON = new ItemStack(net.minecraft.world.item.Items.ARROW);
+
     @Override
     protected ItemStack getDefaultPickupItem() {
-        return ItemStack.EMPTY;
+        return EPCA_PICKUP_ICON.copy();
     }
 
     @Override
     protected ItemStack getPickupItem() {
-        
-        return ItemStack.EMPTY;
+        return EPCA_PICKUP_ICON.copy();
+    }
+
+    /** Belt and braces: an empty pickup stack must never reach the chunk serialiser. */
+    @Override
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        if (this.getPickupItemStackOrigin().isEmpty()) {
+            this.setPickupItemStack(EPCA_PICKUP_ICON.copy());
+        }
+        super.addAdditionalSaveData(tag);
     }
 
 
