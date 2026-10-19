@@ -209,7 +209,11 @@ public abstract class AbstractInfestedEntity extends AbstractEpcaEntity implemen
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (isInvulnerable()) return false;
+        // Bypassing sources (/kill, void damage, ...) must never be refused, otherwise a mob that
+        // ends up invulnerable for any reason cannot be removed even by admins.
+        if (isInvulnerable() && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return false;
+        }
         return super.hurt(source, amount); // AbstractEpcaEntity handles the rest
     }
 
@@ -217,6 +221,14 @@ public abstract class AbstractInfestedEntity extends AbstractEpcaEntity implemen
 
     @Override
     public void die(DamageSource source) {
+        // /kill must really kill: skip both the adaptation resurrection and the fake-death roll.
+        if (source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            this.onNormalDeathActions(source);
+            super.die(source);
+            this.onDeath(source);
+            return;
+        }
+
         // Already faking death  die normally
         if (isFakingDeath()) {
             super.die(source);

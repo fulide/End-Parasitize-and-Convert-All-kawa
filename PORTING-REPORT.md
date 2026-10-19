@@ -251,6 +251,23 @@ cd D:\dev\projects\epca-1.21.1
       同时补发 `ScreenEvent.BackgroundRendered`，避免依赖该事件的 mod 失效。
     - `NestLeaderOrganScreen` 同样在开头画背景、结尾 `super.render` 会二次糊面板；改为只遍历 `renderables`。
 
+19. **🔴 部分感染生物"血量归 0 却杀不死、/kill 无效"（已修复）**
+    复现方式：在专用服务端连杀 12 只 `epca:infested_zombie`，其中 **7 只触发了"假死"**（`startFakeDeath`：
+    `setInvulnerable(true)` + `setNoAi(true)` + 血量压到 `0.02` + `Pose.DYING`，30 tick 后 `discard()`）——
+    概率性正是 `fakeDeathChance = 40`。假死期间 `AbstractEpcaEntity#hurt` 直接 `return false`，所以 `/kill` 无效；
+    一旦因为任何原因（存档/区块卸载时正处于假死、死亡动画被取消、`LivingDeathEvent` 被 adaption 取消…）
+    停在"0 血但没被移除"的状态，原版 `LivingEntity#hurt` 会在 `isDeadOrDying()` 处提前返回，
+    **任何伤害（含 /kill）都再也打不进去**，于是永久僵死。
+    修复（三处）：
+    - `AbstractEpcaEntity#hurt`/`AbstractInfestedEntity#hurt`：任何 `BYPASSES_INVULNERABILITY` 伤害（`/kill`、虚空等）
+      一律放行；假死中收到这类伤害会**立即结束假死并真正死亡**；0 血僵死态直接 `remove(KILLED)`。
+    - `AbstractEpcaEntity#die`/`AbstractInfestedEntity#die`：BYPASS 伤害**跳过**假死随机与适应度复活，保证 `/kill` 必杀。
+    - `tick()` 增加看门狗：0 血且未移除、非假死状态下超过 60 tick 直接 `remove(KILLED)`；
+      并把假死状态写进 NBT（`EpcaFakeDeath` / `EpcaFakeDeathTicks`），读档后**继续跑完假死**而不是留下 NoAI 的残骸；
+      对旧存档里"NoAI + 0.02 血且无假死标记"的残骸，读档时自动解除 NoAI 并把血量补到 1。
+    验证（专用服务端 + RCON）：假死中 `/kill` → `removed=true`；0 血僵死态 `/kill` → `removed=true`；
+    12 连杀全部正常死亡（不再残留假死）。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。

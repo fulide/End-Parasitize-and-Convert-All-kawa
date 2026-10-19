@@ -7,6 +7,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -218,6 +220,48 @@ public abstract class AbstractEpcaEntity extends PathfinderMob
                 }
             }
         }
+
+        // Watchdog: an entity that reached 0 health but never got removed (death animation skipped,
+        // chunk edge, cancelled LivingDeathEvent, ...) would otherwise be immune to every damage
+        // source, /kill included, because LivingEntity#hurt early-outs on isDeadOrDying().
+        if (!this.level().isClientSide) {
+            if (isDeadOrDying() && !isFakingDeath() && !isRemoved()) {
+                if (++this.epca$stalledDeathTicks > 60) {
+                    this.remove(Entity.RemovalReason.KILLED);
+                }
+            } else {
+                this.epca$stalledDeathTicks = 0;
+            }
+        }
+    }
+
+    /** Ticks spent at 0 health without being removed; see the watchdog in {@link #tick()}. */
+    private int epca$stalledDeathTicks;
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putBoolean("EpcaFakeDeath", isFakingDeath());
+        tag.putInt("EpcaFakeDeathTicks", fakeDeathTimer);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.getBoolean("EpcaFakeDeath")) {
+            // Resume the routine instead of leaving a NoAI, 0-health mob behind after a reload.
+            setFakingDeath(true);
+            fakeDeathTimer = Math.max(1, tag.getInt("EpcaFakeDeathTicks"));
+            return;
+        }
+        // Repair mobs saved by older builds mid fake-death: NoAI + burst health and no way to die.
+        if (this instanceof Mob mob && mob.isNoAi() && getHealth() <= EntityHealthUtils.MIN_BURST_HEALTH) {
+            mob.setNoAi(false);
+            setInvulnerable(false);
+            if (getHealth() <= 0.0F) {
+                setHealth(1.0F);
+            }
+        }
     }
 
     
@@ -251,6 +295,8 @@ public abstract class AbstractEpcaEntity extends PathfinderMob
 
     protected void onFakeDeathEnd() {
         setFakingDeath(false);
+        setInvulnerable(false);
+        setNoAi(false);
         if (!this.level().isClientSide) {
             onFakeDeathBurst();
         }
@@ -272,7 +318,27 @@ public abstract class AbstractEpcaEntity extends PathfinderMob
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (isFakingDeath()) return false;
+        boolean bypass = source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
+
+        // A death that stalled (health already 0 but the entity never got removed) must not turn
+        // into permanent immunity: vanilla early-outs on isDeadOrDying() before it ever looks at
+        // BYPASSES_INVULNERABILITY, which is why /kill used to do nothing on such mobs.
+        if (bypass && isDeadOrDying() && !isRemoved()) {
+            this.setFakingDeath(false);
+            this.setInvulnerable(false);
+            this.setNoAi(false);
+            this.remove(Entity.RemovalReason.KILLED);
+            return true;
+        }
+
+        if (isFakingDeath()) {
+            if (!bypass) return false;
+            // /kill during the fake-death routine: end the routine instead of ignoring the command.
+            this.setFakingDeath(false);
+            this.setInvulnerable(false);
+            this.setNoAi(false);
+            this.setBurstHealth(1.0F); // step out of the isDeadOrDying() guard so the hit lands
+        }
 
         if (source.getEntity() instanceof LivingEntity attacker) {
             if (shouldIgnoreDamageFrom(attacker)) return false;
@@ -288,6 +354,15 @@ public abstract class AbstractEpcaEntity extends PathfinderMob
 
     @Override
     public void die(DamageSource source) {
+        // /kill and other bypassing sources must not be swallowed by the fake-death routine.
+        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            this.setFakingDeath(false);
+            this.setInvulnerable(false);
+            this.setNoAi(false);
+            super.die(source);
+            this.onDeath(source);
+            return;
+        }
         if (isFakingDeath()) {
             super.die(source);
             return;
