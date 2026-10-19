@@ -1,10 +1,5 @@
 package org.tdddd.epca.impl.events;
 
-import dev.kosmx.playerAnim.api.layered.IAnimation;
-import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
-import dev.kosmx.playerAnim.api.layered.ModifierLayer;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -43,19 +38,9 @@ public class SpearAttackHandler {
 
         
         if (isSpear && isLiving) {
-            
-            ModifierLayer<IAnimation> animation = (ModifierLayer<IAnimation>) PlayerAnimationAccess
-                    .getPlayerAssociatedData(player)
-                    .get(ResourceLocation.fromNamespaceAndPath(epca.MODID, "stab"));
-
-            if (animation != null) {
-                
-                // 2.x: PlayerAnimationRegistry.getAnimation returns IPlayable; KeyframeAnimationPlayer needs
-                // the concrete KeyframeAnimation, so the playable is narrowed first.
-                var keyframe = PlayerAnimationRegistry.getAnimation(ResourceLocation.fromNamespaceAndPath(epca.MODID, "stab"));
-                if (keyframe instanceof dev.kosmx.playerAnim.core.data.KeyframeAnimation keyframeAnimation) {
-                    animation.setAnimation(new KeyframeAnimationPlayer(keyframeAnimation));
-                }
+            // Player Animator is optional; the compat class is the only place that touches its API.
+            if (org.tdddd.epca.impl.compat.PlayerAnimSupport.available()) {
+                org.tdddd.epca.impl.compat.PlayerAnimCompat.play(player, org.tdddd.epca.impl.compat.PlayerAnimCompat.STAB);
             }
         }
     }

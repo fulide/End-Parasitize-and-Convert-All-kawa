@@ -15,6 +15,8 @@
 | `gradlew build`（clean） | ✅ BUILD SUCCESSFUL |
 | 服务端启动 `gradlew runServer` | ✅ `Done (2.835s)!`，**0 数据包解析错误**（1296 配方 / 1402 进度正常加载） |
 | 客户端启动 `gradlew runClient` | ✅ 标题界面正常，`Sound engine started`，`[epca-araya] slash shader loaded`，**0 mixin 失败、0 崩溃报告** |
+| 无 Player Animator 时启动 | ✅ 已实测（把该依赖从运行期类路径移除后启动，mod list 只剩 epca）：无 `NoClassDefFoundError`，可正常进世界 |
+| 兼容性 | GeckoLib **4.8.4 与 4.9.3 均可编译**；`compat` 层消除渲染类 mod 的 mixin 冲突（见 §7.9/§7.10） |
 | 代码规模 | 732 个 .java / 约 10.6 万行；1330 个资源文件 |
 
 **这是源码级移植**，不是套壳或重写：全部 698 个原始类逐一迁移，业务逻辑与数值保持原样（差异见 §6）。
@@ -29,7 +31,9 @@ D:\dev\projects\epca-1.21.1
 ├─ gradle.properties         minecraft_version=1.21.1 / neo_version=21.1.176
 ├─ src/main/templates/META-INF/neoforge.mods.toml   （1.21 新格式，MDG 展开）
 ├─ src/main/resources/META-INF/accesstransformer.cfg（已改为官方名，5 条）
-├─ src/main/resources/epca.mixins.json              （JAVA_21，无 refmap）
+├─ src/main/resources/epca.mixins.json              （服务端/通用，defaultRequire 1）
+├─ src/main/resources/epca.client.mixins.json       （客户端，defaultRequire 0，失败降级不崩）
+├─ src/main/java/org/tdddd/epca/impl/compat/**      可选依赖隔离层（PlayerAnimSupport / PlayerAnimCompat）
 ├─ src/main/java/org/tdddd/epca/**                  698 → 707 个类
 ├─ src/main/java/org/tdddd/yawning_neko_api/**      25 个类（前置库源码内嵌移植）
 ├─ src/main/java/org/tdddd/epca_physics/**          3 个类（前置库兼容层，见 §5）
@@ -46,7 +50,7 @@ D:\dev\projects\epca-1.21.1
 | 依赖 | 1.20.1 | 1.21.1 方案 | 状态 |
 |---|---|---|---|
 | **GeckoLib** | 4.8.4 forge | `software.bernie.geckolib:geckolib-neoforge-1.21.1:4.8.4` | ✅ 官方 1.21.1 版本，API 仅去掉 `.core` 包段 |
-| **Player Animator** | 1.2.x forge | `dev.kosmx.player-anim:player-animation-lib-forge:2.0.4+1.21.1` | ✅ 官方 NeoForge 版；API 2.x 差异已适配（`playAnimation()` 等） |
+| **Player Animator** | 1.2.x forge | `dev.kosmx.player-anim:player-animation-lib-forge:2.0.4+1.21.1` | ✅ 官方 NeoForge 版；**可选依赖**：全部 API 用法收敛到 `compat/PlayerAnimCompat`，缺失时自动跳过（已实测无该 mod 启动成功） |
 | **yawning_neko_api** | 1.0.5 jar | **反编译 → 源码内嵌移植**（同包名 25 类） | ✅ 数据驱动系统（伤害适应/最低伤害/实体强化/免疫）完整工作，7 个 datapack 目录全部可加载 |
 | **epca_physics** | 1.0.0 jar | **兼容层**（`SubLevel`/`SubLevelRegistry`/`SubLevelBehaviour` 3 类） | ⚠️ 物理化方块特性降级，见 §5 |
 | **eej（End-Element-Journey）** | 1.0.0 jar | **可选集成关闭**（`EejCompat.loaded()` 恒 false） | ⚠️ 祭坛联动关闭，见 §5 |
@@ -116,6 +120,8 @@ AbstractArrow setPierceLevel(B)V
 | 4 | **网络不兼容 1.20.1 客户端** | 协议从"单通道 + int 判别"改为"每包一个 ResourceLocation" | NeoForge 1.21.1 强制 `CustomPacketPayload` |
 | 5 | **Jade 提示移除** | 不再显示生物适应度/击杀数悬浮提示 | 可选联动；Jade 1.21.1 API 差异大，为控制风险删除 |
 | 6 | GeckoLib 4.8 渲染细节 | 若干旧 5 参 `applyRotations` 覆盖在 4.8 中本就不会被调用（本次改为 6 参，属修复） | 上游 API 变化 |
+| 7 | **不装 Player Animator 时无玩家动画** | 长矛突刺、击杀法杖的第三人称/第一人称动画不播放；其余玩法正常 | 该依赖改为 **optional**，缺失时 `PlayerAnimSupport.available() == false` 直接跳过（见 §7.10） |
+| 8 | 渲染类 mod 下部分客户端特效可能降级 | 例如别的 mod 占用了同一渲染调用时，本 mod 的着色层/闪电染色会**静默不生效**（不再崩溃） | 客户端 mixin 配置 `defaultRequire: 0`，失败即降级 |
 
 > 以上均已在源码注释中标注；不影响主玩法（感染、转化、进化、巢穴首领、器官系统）。
 
@@ -150,6 +156,23 @@ cd D:\dev\projects\epca-1.21.1
 6. **`ItemStack.STRICT_CODEC` 用 `id` 而不是 `item`** —— 配方 `result` 必须跟着改，否则整条配方静默不加载。
 7. **维度类型 `monster_spawn_light_level` 的 `IntProvider` 不再有 `value` 包裹层**，否则 `dimension_type` 注册失败、服务端起不来。
 8. **`minecraft:set_nbt` 战利品函数在 1.20.5 已删除**，必须换 `set_components` + `custom_data`（本次只有 `swallow_cyst` 一处）。
+9. **🔴 混装渲染类 mod 时的 `@Redirect` 冲突（真机崩溃已修复）**
+   现象：在装有 `acceleratedrendering` / `sodium` / `lightspeed` 等渲染优化 mod 的整合包里启动即崩：
+   ```
+   @Redirect conflict. Skipping epca.mixins.json:client.LivingEntityRendererTintMixin ... 
+   InjectionError: Critical injection failure: Redirector epca$renderTintedModel ... (0/1) succeeded
+   ```
+   根因：`@Redirect` 对同一处调用是**独占**的，别的 mod 先占位后 Mixin 直接跳过我们的注入，而 `defaultRequire: 1` 把"跳过"升级成致命错误。
+   修复：
+   - `LivingEntityRendererTintMixin` / `LightningBoltRendererMixin` / `MerchantOfferMixin` 的 `@Redirect` → **`@WrapOperation`（MixinExtras，随 NeoForge 内置）**，可与其他 redirect / wrap 叠加，不再互斥；
+   - 客户端 mixin 拆到独立的 `epca.client.mixins.json`，`defaultRequire: 0`（渲染路径被优化 mod 改写时**降级而不是崩游戏**）；服务端 mixin 仍保持 `defaultRequire: 1`（玩法核心必须生效）；
+   - 顺带给 `ItemRendererShaderLayerMixin` 去掉失效的 `ordinal = 1`（见第 5 条）。
+10. **🔴 未安装 Player Animator 时的 `NoClassDefFoundError`（真机崩溃已修复）**
+    现象：`Failed to register automatic subscribers. ModID: epca → NoClassDefFoundError: dev/kosmx/playerAnim/api/layered/IAnimation`。
+    根因：`events/PlayerAnimator` 是 `@EventBusSubscriber`（FML 启动时会 `Class.forName` 它），而它的**方法签名**里就有 PAL 类型 ⇒ 没装该 mod 时类加载失败 ⇒ 整个 mod 构造失败。
+    修复：把所有 PAL 用法收敛到 `impl/compat/PlayerAnimCompat`（唯一引用 `dev.kosmx.*` 的类），并新增不含任何 PAL 引用的探针 `PlayerAnimSupport.available()`；
+    `@EventBusSubscriber` 的 `events/PlayerAnimator` 删除，改为 `ClientSetup` 里 `if (PlayerAnimSupport.available()) PlayerAnimCompat.registerFactories();`。
+    现在**不装 Player Animator 也能正常启动**（只是长矛/击杀法杖的玩家动画不播放），`neoforge.mods.toml` 里该依赖为 `optional`。
 
 ---
 

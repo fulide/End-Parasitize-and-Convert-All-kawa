@@ -8,7 +8,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.tdddd.epca.impl.overworld.registry.items.item.InfestedEmerald;
 import org.tdddd.epca.impl.utils.MerchantOfferMixinAccess;
@@ -22,18 +23,21 @@ public abstract class MerchantOfferMixin implements MerchantOfferMixinAccess {
     // 1.21.1: MerchantOffer no longer has isRequiredItem; the payment check is satisfiedBy, which
     // tests each cost with ItemCost#test. An infested emerald is accepted wherever an emerald is
     // required, exactly as the 1.20.1 redirect on ItemStack#isSameItem did.
-    @Redirect(
+    // @WrapOperation (not @Redirect) so another mod touching the same call cannot cause a fatal
+    // "redirect conflict"; require = 0 keeps a future signature change non-fatal.
+    @WrapOperation(
             method = "satisfiedBy",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/item/trading/ItemCost;test(Lnet/minecraft/world/item/ItemStack;)Z"
-            )
+            ),
+            require = 0
     )
-    private boolean redirectCostTest(ItemCost cost, ItemStack provided) {
+    private boolean redirectCostTest(ItemCost cost, ItemStack provided, Operation<Boolean> original) {
         if (cost.item().value() == Items.EMERALD && provided.getItem() instanceof InfestedEmerald) {
             return true;
         }
-        return cost.test(provided);
+        return original.call(cost, provided);
     }
 
     @Inject(method = "take", at = @At("RETURN"))

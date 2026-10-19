@@ -17,17 +17,6 @@
     "common.PointedDripstoneBlockMixin",
     "common.SugarCaneBlockMixin"
   ],
-  "client": [
-    "client.BiomeColorsMixin",
-    "client.BlockColorsMixin",
-    "client.CreateWorldScreenMixin",
-    "client.FogRendererDevourMixin",
-    "client.GameRendererShaderLayerMixin",
-    "client.ItemRendererShaderLayerMixin",
-    "client.ItemRendererTwitchMixin",
-    "client.LightningBoltRendererMixin",
-    "client.LivingEntityRendererTintMixin"
-  ],
   "injectors": {
     "defaultRequire": 1
   }

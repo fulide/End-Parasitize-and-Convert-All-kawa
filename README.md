@@ -29,8 +29,8 @@ $env:GRADLE_USER_HOME='D:\gradle-home'
 
 | mod | 版本 | 必需 |
 |---|---|---|
-| GeckoLib | 4.8.4（1.21.1 NeoForge） | ✅ 必需 |
-| Player Animator | 2.0.4（1.21.1 NeoForge） | 可选（缺失时玩家动画不播放） |
+| GeckoLib | 4.8.4+（1.21.1 NeoForge；4.8.4 / 4.9.3 均已验证编译） | ✅ 必需 |
+| Player Animator | 2.0.4（1.21.1 NeoForge） | 可选（缺失时只有长矛/击杀法杖的玩家动画不播放，其余正常；已实测无它也启动） |
 
 `yawning_neko_api`（伤害适应系统）已作为源码内嵌进本 jar，**不需要**单独安装。
 
@@ -44,3 +44,4 @@ $env:GRADLE_USER_HOME='D:\gradle-home'
 2. eej 祭坛联动关闭 —— `eej` 为可选依赖，无 1.21.1 产物。
 3. 旧 1.20.1 存档中的物品 NBT / 属性修饰符不迁移（1.21 改为 DataComponents / ResourceLocation id）。
 4. 网络协议与 1.20.1 客户端不兼容（NeoForge CustomPacketPayload）。
+5. 首次修复了两类真机崩溃：渲染优化 mod 下的 `@Redirect` 冲突（改用 `@WrapOperation`）、未装 Player Animator 时的 `NoClassDefFoundError`（已隔离为可选依赖）。详见 PORTING-REPORT.md §7.9/§7.10。

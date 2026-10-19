@@ -29,6 +29,13 @@ public class ClientSetup {
     public static void onClientSetup1(FMLClientSetupEvent event) {
         //  shader
         EpcaRenderClient.onClientSetup(event);
+
+        // Player Animator is optional: only touch its API (and therefore its classes) when the mod
+        // is actually installed. A direct reference from this @EventBusSubscriber class would make
+        // FML's automatic subscriber injection fail with NoClassDefFoundError without it.
+        if (org.tdddd.epca.impl.compat.PlayerAnimSupport.available()) {
+            org.tdddd.epca.impl.compat.PlayerAnimCompat.registerFactories();
+        }
         
         event.enqueueWork(() -> {
             Item bloodyClock = ModItems.BLOODY_CLOCK.get();

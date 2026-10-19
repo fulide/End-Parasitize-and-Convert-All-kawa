@@ -1,10 +1,5 @@
 package org.tdddd.epca.impl.overworld.registry.items.item;
 
-import dev.kosmx.playerAnim.api.IPlayable;
-import dev.kosmx.playerAnim.api.layered.IAnimation;
-import dev.kosmx.playerAnim.api.layered.ModifierLayer;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -89,19 +84,10 @@ public class KillStick extends Item {
                 if (player.getCooldowns().isOnCooldown(this)) {
                     return;
                 }
-                ModifierLayer<IAnimation> animation = (ModifierLayer<IAnimation>) PlayerAnimationAccess
-                        .getPlayerAssociatedData(clientPlayer)
-                        .get(ResourceLocation.fromNamespaceAndPath(epca.MODID, "kill_stick"));
-                if (animation != null) {
-                    // PlayerAnimator 2.x: the registry returns an IPlayable, no longer a KeyframeAnimation, and
-                    // KeyframeAnimationPlayer's constructors only take KeyframeAnimation. IPlayable#playAnimation()
-                    // yields exactly the old `new KeyframeAnimationPlayer(animation)` result.
-                    IPlayable playable = PlayerAnimationRegistry.getAnimation(
-                            ResourceLocation.fromNamespaceAndPath(epca.MODID, "kill_stick")
-                    );
-                    if (playable != null) {
-                        animation.setAnimation(playable.playAnimation());
-                    }
+                // Player Animator is optional; PlayerAnimCompat is the only class touching its API.
+                if (org.tdddd.epca.impl.compat.PlayerAnimSupport.available()) {
+                    org.tdddd.epca.impl.compat.PlayerAnimCompat.play(
+                            clientPlayer, org.tdddd.epca.impl.compat.PlayerAnimCompat.KILL_STICK);
                 }
             }
         }
@@ -160,11 +146,9 @@ public class KillStick extends Item {
     }
 
     private static void clearAnimation(AbstractClientPlayer player) {
-        ModifierLayer<IAnimation> animation = (ModifierLayer<IAnimation>) PlayerAnimationAccess
-                .getPlayerAssociatedData(player)
-                .get(ResourceLocation.fromNamespaceAndPath(epca.MODID, "kill_stick"));
-        if (animation != null) {
-            animation.setAnimation(null);
+        if (org.tdddd.epca.impl.compat.PlayerAnimSupport.available()) {
+            org.tdddd.epca.impl.compat.PlayerAnimCompat.clear(
+                    player, org.tdddd.epca.impl.compat.PlayerAnimCompat.KILL_STICK);
         }
     }
 

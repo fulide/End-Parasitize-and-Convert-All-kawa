@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "org.tdddd.epca.impl.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "client.BiomeColorsMixin",
+    "client.BlockColorsMixin",
+    "client.CreateWorldScreenMixin",
+    "client.FogRendererDevourMixin",
+    "client.GameRendererShaderLayerMixin",
+    "client.ItemRendererShaderLayerMixin",
+    "client.ItemRendererTwitchMixin",
+    "client.LightningBoltRendererMixin",
+    "client.LivingEntityRendererTintMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

@@ -6,6 +6,12 @@ issueTrackerURL = "https://github.com/tddddasd/End-Parasitize-and-Convert-All/is
 [[mixins]]
 config = "epca.mixins.json"
 
+# Client-only mixins live in their own config with defaultRequire = 0: render-path hooks are
+# frequently touched by shader/performance mods, and a missed injection there must degrade
+# gracefully instead of crashing the game.
+[[mixins]]
+config = "epca.client.mixins.json"
+
 [[mods]]
 modId = "epca"
 version = "${mod_version}"

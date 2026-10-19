@@ -13,7 +13,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.tdddd.epca.impl.client.ClientColorEffect;
 
@@ -41,18 +42,25 @@ public abstract class LivingEntityRendererTintMixin {
         EPCA_CURRENT_ENTITY.remove();
     }
 
-    // The model draw call is redirected instead of modifying each colour argument by index:
-    // a redirect handler is matched against the invocation itself (the instance plus its own
-    // arguments), so the tint cannot break when an argument index shifts, or when another
-    // mixin also rewrites the same invocation.
+    // The model draw call is wrapped instead of redirected:
+    //  * a redirect cannot coexist with another mod's redirect on the same invocation (Mixin
+    //    reports "@Redirect conflict. Skipping ..." and, with require = 1, turns that into a
+    //    fatal MixinTransformerError that takes the whole game down - e.g. in packs shipping
+    //    accelerated-rendering / Sodium-class renderers);
+    //  * @WrapOperation (MixinExtras, bundled with NeoForge) composes with redirects and with
+    //    other wrap operations, so the tint survives alongside performance mods;
+    //  * require = 0 makes it fail safe: if a future MC/pack change removes the call, the mod
+    //    loses the tint instead of crashing.
     //
     // 1.21.1: Model#renderToBuffer takes a single packed ARGB int instead of four floats, so the
-    // tint is unpacked, multiplied and repacked around the redirect.
-    @Redirect(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+    // tint is unpacked, multiplied and repacked around the wrapped call.
+    @WrapOperation(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;III)V"))
+                    target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;III)V"),
+            require = 0)
     private void epca$renderTintedModel(EntityModel<?> model, PoseStack poseStack, VertexConsumer vertexConsumer,
-                                        int packedLight, int packedOverlay, int color) {
+                                        int packedLight, int packedOverlay, int color,
+                                        Operation<Void> original) {
         ClientColorEffect.EffectData data = ClientColorEffect.getEffect(EPCA_CURRENT_ENTITY.get());
         if (data != null) {
             float[] rgb = data.getColorRGB();
@@ -65,6 +73,6 @@ public abstract class LivingEntityRendererTintMixin {
             float alpha = FastColor.ARGB32.alpha(color) / 255.0F * effectAlpha;
             color = FastColor.ARGB32.colorFromFloat(alpha, red, green, blue);
         }
-        model.renderToBuffer(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+        original.call(model, poseStack, vertexConsumer, packedLight, packedOverlay, color);
     }
 }
