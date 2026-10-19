@@ -226,6 +226,19 @@ cd D:\dev\projects\epca-1.21.1
     共 5 处：`CothEffectEvents`、`LivingEntityMixin`（×2）、`DeepSneakEffect`、`End……ErosionEffect`（×3）、`EffectApplicationInterceptor`。
     已改为 `.value() != X.get()` 形式 —— 修复前 **COTH（虫巢召唤）的自定义处理、深沉潜行的移除逻辑、末影侵蚀的计时器全部是死代码**。
 
+17. **🔴 附魔台青金石槽不接受 `epca:infested_lapis_lazuli`（已修复）**
+    1.21.1 原版 `EnchantmentMenu` 把青金石槽硬编码成匿名 `Slot` 里的 `stack.is(Items.LAPIS_LAZULI)`（源码里就留着
+    `// Neo: TODO - replace with the tag` 的注释），所以任何"青金石类"物品都放不进去。
+    修复方式：
+    - 新增 `EnchantingFuelSlot`（继承 `Slot`），接受**原版青金石**、**`c:enchanting_fuels` 标签内的物品**、以及 `epca:infested_lapis_lazuli`；
+    - `EnchantmentMenuMixin` 在菜单构造完成后把 1 号槽替换成它；
+    - 同 mixin 用 `@Redirect(require = 0)` 修正 `quickMoveStack` 里的同一个判断，让 **Shift+左键**也能把虫染青金石送进燃料槽。
+    坑：`@Inject(method = "<init>")` 只会匹配到**第一个**构造器（`(int, Inventory)` 那个委托构造器），
+    服务端实际用的是 `(int, Inventory, ContainerLevelAccess)`，必须写完整描述符才会生效。
+    验证（专用服务端 + RCON 自检命令）：`slotClass=EnchantingFuelSlot`、`acceptsInfested=true`、`acceptsLapis=true`、
+    `rejectsDirt=true`、`shiftClickToFuel=true`（6 个全部进入 1 号槽）。菜单其余逻辑（费用计算、`clickMenuButton` 的消耗、
+    `getGoldCount()`）只清点数量、不校验物品 id，因此不需要额外 hook。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。
