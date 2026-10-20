@@ -4,3 +4,5 @@
 *.zip binary
 *.glb binary
 *.class binary
+*.nbt binary
+
