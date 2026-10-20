@@ -281,6 +281,22 @@ cd D:\dev\projects\epca-1.21.1
     验证（RCON）：`biomass_egg: OK item={count:1,id:"minecraft:egg"}` / `bone_arrow: OK item={count:1,id:"minecraft:arrow"}`
     / 无射手构造路径同样 OK；服务端日志不再出现 `Cannot encode` / `EntityStorage` 异常。
 
+21. **🔴 三个结构里用了可选依赖 `eej` 的方块（已替换为原版方块）**
+    `abandoned_cake_workshop` / `_sand` / `_redsand` 三个 `.nbt` 结构模板的调色板里含有
+    `eej:packed_mud_altar_stone` 与 `eej:packed_mud_pedestal` —— `eej`（祭坛 mod）没有 1.21.1 产物，
+    这两个方块不存在，生成时那部分会变成空洞；被替换掉的 `eej:packed_mud_pedestal` 还带着
+    方块实体 NBT（`id` + 空 inventory + `filterData`），放着不管只会在放置时刷 "mismatched block entity"。
+    处理（用脚本直接改写 NBT，见 `nbt.py` / `fix_structure_blocks.py`）：
+    - `eej:packed_mud_altar_stone` → `minecraft:packed_mud`（结构里本来就有这个方块，风格一致）
+    - `eej:packed_mud_pedestal`    → `minecraft:mud_bricks`（同样本来就在调色板里）
+    - 并把指向这两个状态的方块条目上的 `nbt` 键删除（原版方块没有方块实体）
+    处理结果：三个结构调色板 **只剩 `minecraft:` 命名空间**，方块总数不变（5082），
+    state 索引全部合法，文件从 16.4/16.3/16.1 KB 降到 14.7/14.5/14.7 KB。
+    验证（专用服务端 RCON，`/place template` 直接放模板而不是 jigsaw 结构）：
+    - `abandoned_cake_workshop` → `mud_bricks` 175 块、`packed_mud` 39 块，与 NBT 统计一致；
+    - `_sand` → `mud_bricks` 175 块；`_redsand` → `mud_bricks` 174 块；
+    - 服务端日志 **0 条 ERROR**（此前 `eej` 方块缺失时会报未知方块/解析失败）。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。
