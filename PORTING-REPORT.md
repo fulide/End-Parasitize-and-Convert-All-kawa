@@ -297,6 +297,21 @@ cd D:\dev\projects\epca-1.21.1
     - `_sand` → `mud_bricks` 175 块；`_redsand` → `mud_bricks` 174 块；
     - 服务端日志 **0 条 ERROR**（此前 `eej` 方块缺失时会报未知方块/解析失败）。
 
+22. **🔴 创造模式投出的长矛无法拾回（已修复）**
+    8 个 `Thrown*Spear`（木/石/铁/金/钻/下界合金/铜/燧石）的 `playerTouch` 里有这么一句：
+    ```java
+    if (this.wasCreativeThrower) return;
+    ```
+    创造模式投掷不消耗物品，于是落地后的长矛既不进背包、也不会被移除 —— **永远躺在原地**，
+    玩家表现为"捡不起来"。
+    修复：改为按原版 `Pickup.CREATIVE_ONLY` 的语义处理——
+    - 创造模式投出的长矛：创造模式玩家触碰 → 播拾取音效并 `discard()`（物品本来就没消耗，不复制）；
+      非创造玩家触碰 → 不能拿（避免刷长矛）。
+    - 生存模式投出的长矛：保持原逻辑，触碰入手（背包满则留在地上）。
+    验证（专用服务端 RCON 自检）：
+    `creativeThrow/creativePlayer removed=true`、`creativeThrow/survivalPlayer removed=false`、
+    `survivalThrow/survivalPlayer removed=true`、`survivalThrow/creativePlayer removed=true`。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。

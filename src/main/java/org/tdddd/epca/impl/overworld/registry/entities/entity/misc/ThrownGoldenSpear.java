@@ -202,8 +202,22 @@ public class ThrownGoldenSpear extends AbstractArrow {
     public void playerTouch(Player player) {
         if (this.returnTimer > 0) return;
         
-        if (!this.level().isClientSide && this.pickup == Pickup.ALLOWED) {
-            if (this.wasCreativeThrower) return;
+        if (this.level().isClientSide) return;
+
+        // A spear thrown in creative mode is never handed back to the thrower (the stack was not
+        // consumed), so it used to be left lying on the ground forever - reported as "cannot pick
+        // the spear back up in creative". Mirror vanilla's Pickup.CREATIVE_ONLY handling: creative
+        // players remove it silently, everybody else cannot take it (no free spears from creative).
+        if (this.wasCreativeThrower || this.pickup == Pickup.CREATIVE_ONLY) {
+            if (player.getAbilities().instabuild) {
+                this.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2F, 1.0F);
+                this.discard();
+            }
+            return;
+        }
+
+        if (this.pickup == Pickup.ALLOWED) {
             if (player.getInventory().add(this.spearItem)) {
                 this.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                         SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2F, 1.0F);
