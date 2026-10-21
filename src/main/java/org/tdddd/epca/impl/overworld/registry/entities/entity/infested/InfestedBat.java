@@ -52,6 +52,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 import org.tdddd.epca.impl.utils.EntityHealthUtils;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 public class InfestedBat extends PathfinderMob implements GeoEntity, IParasite, IInfested, Enemy {
     private final AnimatableInstanceCache factory = GeckoLibUtil.createInstanceCache(this);
@@ -667,7 +668,7 @@ public class InfestedBat extends PathfinderMob implements GeoEntity, IParasite, 
 
             if (shouldLeave) {
                 if (random.nextFloat() < 0.3f) {
-                    target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 200, 0, false, true));
+                    target.addEffect(EffectCompat.bleedingInstance( 200, 0, false, true));
                 }
                 setCurrentState(BatState.LEAVING);
                 leaveTimer = 0;

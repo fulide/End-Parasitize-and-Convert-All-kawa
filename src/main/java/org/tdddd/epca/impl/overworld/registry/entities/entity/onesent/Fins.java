@@ -51,6 +51,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 public class Fins extends PathfinderMob implements GeoEntity, IParasite, IOnesent, Enemy {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -251,7 +252,7 @@ public class Fins extends PathfinderMob implements GeoEntity, IParasite, IOnesen
 
     private void applyBleedingEffect(LivingEntity target) {
         
-        MobEffectInstance existingEffect = target.getEffect(ModEffects.BLEEDING);
+        MobEffectInstance existingEffect = EffectCompat.activeBleeding(target);
         int newAmplifier = 0; 
 
         if (existingEffect != null) {
@@ -260,8 +261,7 @@ public class Fins extends PathfinderMob implements GeoEntity, IParasite, IOnesen
         }
 
         
-        target.addEffect(new MobEffectInstance(
-                ModEffects.BLEEDING,
+        target.addEffect(EffectCompat.bleedingInstance(
                 100,  
                 newAmplifier,
                 false, false, true

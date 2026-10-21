@@ -4,6 +4,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import org.tdddd.epca.impl.overworld.registry.ModEffects;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 public class ParasiteViscera extends Item {
     public ParasiteViscera(Properties properties) {
@@ -20,8 +21,7 @@ public class ParasiteViscera extends Item {
                         30 * 20,  
                         0  
                 ), 0.95F)  
-                .effect(() -> new MobEffectInstance(
-                        ModEffects.VIRAL,  
+                .effect(() -> EffectCompat.viralInstance(  
                         5 * 20,  
                         0  
                 ), 0.2F)  

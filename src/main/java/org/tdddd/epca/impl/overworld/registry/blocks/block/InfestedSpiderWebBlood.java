@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 public class InfestedSpiderWebBlood extends WebBlock implements InfestedBlockInterface {
     public static final BooleanProperty SPIDER = BooleanProperty.create("spider");
@@ -198,7 +199,7 @@ public class InfestedSpiderWebBlood extends WebBlock implements InfestedBlockInt
         long lastEffect = data.getLong("InfestedWebLastEffect");
         if (now - lastEffect >= 20) {
             living.addEffect(new MobEffectInstance(ModEffects.COTH, 20 * 20, 0));
-            living.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 15 * 20, 0));
+            living.addEffect(EffectCompat.bleedingInstance( 15 * 20, 0));
             data.putLong("InfestedWebLastEffect", now);
         }
     }

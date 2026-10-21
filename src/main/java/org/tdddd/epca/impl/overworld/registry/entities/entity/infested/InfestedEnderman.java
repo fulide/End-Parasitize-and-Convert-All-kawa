@@ -73,6 +73,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
 import org.tdddd.epca.impl.utils.EntityHealthUtils;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 public class InfestedEnderman extends PathfinderMob implements GeoEntity, IParasite, IInfested, Enemy , IHeadRotatable, IGlowRenderable {
     private final AnimatableInstanceCache factory = GeckoLibUtil.createInstanceCache(this);
@@ -813,7 +814,7 @@ public class InfestedEnderman extends PathfinderMob implements GeoEntity, IParas
         int choice = random.nextInt(4);
         switch (choice) {
             case 0 -> target.addEffect(new MobEffectInstance(MobEffects.POISON, 60, 0));
-            case 1 -> target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 120, 0));
+            case 1 -> target.addEffect(EffectCompat.bleedingInstance( 120, 0));
             case 2 -> target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 0));
             case 3 -> target.igniteForSeconds(6.0F);
         }

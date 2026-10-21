@@ -56,7 +56,9 @@ public class EntityAttackEffectHandler {
     }
 
     private void applyEffect(LivingEntity target, EntityAttackEffectManager.AttackEffect effectConfig) {
-        ResourceLocation effectId = ResourceLocation.tryParse(effectConfig.getEffectId());
+        // epca:viral / epca:bleeding may be substituted by another mod's effect at runtime
+        ResourceLocation effectId = ResourceLocation.tryParse(
+                org.tdddd.epca.impl.compat.EffectCompat.mapDataEffectId(effectConfig.getEffectId()));
         if (effectId == null) {
             return;
         }

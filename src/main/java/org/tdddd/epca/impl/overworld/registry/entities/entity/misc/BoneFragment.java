@@ -18,6 +18,7 @@ import org.tdddd.epca.impl.overworld.registry.ModEffects;
 import org.tdddd.epca.impl.overworld.registry.entities.IParasite;
 import org.tdddd.epca.impl.overworld.registry.ModEntities;
 import org.tdddd.epca.impl.overworld.registry.ModItems;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 public class BoneFragment extends ThrowableProjectile {
 
@@ -75,7 +76,7 @@ public class BoneFragment extends ThrowableProjectile {
 
                 
                 if (this.random.nextFloat() < 0.1f) {
-                    livingTarget.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 5 * 20, 0));
+                    livingTarget.addEffect(EffectCompat.bleedingInstance( 5 * 20, 0));
                 }
 
                 

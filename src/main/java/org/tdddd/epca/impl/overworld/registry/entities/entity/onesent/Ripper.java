@@ -60,6 +60,7 @@ import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 public class Ripper extends PathfinderMob implements GeoEntity, IParasite, IOnesent, Enemy {
 
@@ -537,13 +538,12 @@ public class Ripper extends PathfinderMob implements GeoEntity, IParasite, IOnes
 
     
     private void applyBleedingEffect(LivingEntity target) {
-        MobEffectInstance existingEffect = target.getEffect(ModEffects.BLEEDING);
+        MobEffectInstance existingEffect = EffectCompat.activeBleeding(target);
         int newAmplifier = 0;
         if (existingEffect != null) {
             newAmplifier = Math.min(existingEffect.getAmplifier() + 1, 4);
         }
-        target.addEffect(new MobEffectInstance(
-                ModEffects.BLEEDING,
+        target.addEffect(EffectCompat.bleedingInstance(
                 100,
                 newAmplifier,
                 false, false, true
@@ -551,13 +551,12 @@ public class Ripper extends PathfinderMob implements GeoEntity, IParasite, IOnes
     }
 
     private void applyViralEffect(LivingEntity target) {
-        MobEffectInstance existingEffect = target.getEffect(ModEffects.VIRAL);
+        MobEffectInstance existingEffect = EffectCompat.activeViral(target);
         int newAmplifier = 0;
         if (existingEffect != null) {
             newAmplifier = Math.min(existingEffect.getAmplifier() + 1, 255);
         }
-        target.addEffect(new MobEffectInstance(
-                ModEffects.VIRAL,
+        target.addEffect(EffectCompat.viralInstance(
                 100,
                 newAmplifier,
                 false, false, true

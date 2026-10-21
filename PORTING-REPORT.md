@@ -312,6 +312,29 @@ cd D:\dev\projects\epca-1.21.1
     `creativeThrow/creativePlayer removed=true`、`creativeThrow/survivalPlayer removed=false`、
     `survivalThrow/survivalPlayer removed=true`、`survivalThrow/creativePlayer removed=true`。
 
+23. **🟢 效果替身：装了 LSO / sa_core 时改用它们的效果（新增兼容层）**
+    需求：整合包里同时装了 `legendarysurvivaloverhaul`（内伤）和 `sa_core`（流血）时，
+    不应该再叠加本模组同语义的 `epca:viral` / `epca:bleeding`。
+    实现：新增 `org.tdddd.epca.impl.compat.EffectCompat`——
+    - `legendarysurvivaloverhaul` 已加载 ⇒ `epca:viral` 换成 `legendarysurvivaloverhaul:vulnerability`；
+    - `sa_core` 已加载 ⇒ `epca:bleeding` 换成 `sa_core:bleeding`；
+    - 只按 `ResourceLocation` 去 `BuiltInRegistries.MOB_EFFECT.getHolder(...)` 查，**不编译依赖**；
+      查不到就静默回落并打一条 WARN。
+    覆盖点：
+    - 所有 `new MobEffectInstance(ModEffects.BLEEDING/VIRAL, …)` 改为 `EffectCompat.*Instance(...)`（9 个文件）；
+    - 叠层判定（`Fins`/`Ripper` 的 `getEffect(...)`）改用 `activeBleeding/activeViral`，
+      旧存档里残留的本体效果仍然认；
+    - `entity_attack_effects/*.json` 里的 `epca:bleeding` 由 `mapDataEffectId()` 在**运行时**重映射，
+      数据文件不用改两份；
+    - `entity_immunity_effects/*.json` 里虫族对 `epca:viral` 的免疫由 `immunityAlias()` 继承给替身，
+      否则装了 LSO 后虫族会突然吃"内伤"；
+    - 首领免疫名单（`NestLeaderHandler`）用 `EffectCompat.isViral()` 同时认本体与替身。
+    **刻意不改的地方**：`LivingHurtEventHandler` / `ViralEffectEventHandler` / `WaterInteractionHandler`
+    只认 `epca:viral`——替身有自己的易伤实现，如果这里也认就会双倍加伤。
+    验证（专用服务端 + 强制替身 id）：`viralSub/bleedSub=true`、`bleedApplied=替身`、`bleedStacked amp=1`、
+    `mapBleeding/mapViral` 正确重映射、`aliasBleeding/aliasViral` 正确回指、非免疫生物（牛）两个效果都挂上、
+    免疫的虫族替身被正确拦下。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。

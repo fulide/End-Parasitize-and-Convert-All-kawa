@@ -73,6 +73,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Collection;
 import java.util.EnumSet;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 /**
  * The walking spider head (the mod's head mob of the spider family).
@@ -683,7 +684,7 @@ public class WalkingSpiderHead extends PathfinderMob implements GeoEntity, IPara
                 e -> e != null && e.isAlive() && !IParasite.isParasiteByTagOrInterface(e))) {
             switch (getVariant()) {
                 case BLOOD -> living.addEffect(
-                        new MobEffectInstance(ModEffects.BLEEDING, 100, 0, false, true));
+                        EffectCompat.bleedingInstance( 100, 0, false, true));
                 case CAVE -> living.addEffect(
                         new MobEffectInstance(MobEffects.POISON, 100, 1, false, true));
                 default -> {

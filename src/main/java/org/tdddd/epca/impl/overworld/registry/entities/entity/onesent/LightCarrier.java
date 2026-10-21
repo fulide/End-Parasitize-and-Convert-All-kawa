@@ -50,6 +50,7 @@ import software.bernie.geckolib.animation.PlayState;
 import org.tdddd.epca.impl.overworld.registry.ModSoundEvents;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import org.tdddd.epca.impl.utils.EntityHealthUtils;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 public class LightCarrier extends PathfinderMob implements GeoEntity, IParasite, IOnesent, Enemy {
     
@@ -337,7 +338,7 @@ public class LightCarrier extends PathfinderMob implements GeoEntity, IParasite,
                 cloud.setWaitTime(0);           
                 cloud.setDuration(120);          
                 
-                cloud.addEffect(new MobEffectInstance(ModEffects.VIRAL, 300, 1)); 
+                cloud.addEffect(EffectCompat.viralInstance( 300, 1)); 
                 cloud.addEffect(new MobEffectInstance(ModEffects.COTH, 600, 0));   
                 this.level().addFreshEntity(cloud);
             }

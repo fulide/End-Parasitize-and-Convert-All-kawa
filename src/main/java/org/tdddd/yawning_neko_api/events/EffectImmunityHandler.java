@@ -20,7 +20,9 @@ public final class EffectImmunityHandler {
             MobEffectInstance effectInstance = event.getEffectInstance();
             if (effectInstance != null) {
                 ResourceLocation effectId = BuiltInRegistries.MOB_EFFECT.getKey(effectInstance.getEffect().value());
-                if (effectId != null && EntityImmunityEffectManager.isImmune(entity, effectId.toString())) {
+                if (effectId != null && EntityImmunityEffectManager.isImmune(entity, effectId.toString())
+                        || (effectId != null && EntityImmunityEffectManager.isImmune(entity,
+                                org.tdddd.epca.impl.compat.EffectCompat.immunityAlias(effectId.toString())))) {
                     event.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
                 }
             }

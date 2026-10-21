@@ -78,6 +78,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Collection;
 import java.util.EnumSet;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 /**
  * Infested spider family (spider / cave spider). One entity type with a synced {@link Variant}
@@ -914,7 +915,7 @@ public class InfestedSpider extends PathfinderMob implements GeoEntity, IParasit
     /** README: BLOOD always applies Bleeding I, CAVE always applies Poison II. */
     public void applyVariantOnHitEffect(LivingEntity target) {
         switch (getVariant()) {
-            case BLOOD -> target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 100, 0, false, true));
+            case BLOOD -> target.addEffect(EffectCompat.bleedingInstance( 100, 0, false, true));
             case CAVE -> target.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 1, false, true));
             default -> {
             }
@@ -1016,7 +1017,7 @@ public class InfestedSpider extends PathfinderMob implements GeoEntity, IParasit
                 e -> e != null && e.isAlive() && !IParasite.isParasiteByTagOrInterface(e))) {
             switch (getVariant()) {
                 case BLOOD -> living.addEffect(
-                        new MobEffectInstance(ModEffects.BLEEDING, 100, 0, false, true));
+                        EffectCompat.bleedingInstance( 100, 0, false, true));
                 case CAVE -> living.addEffect(
                         new MobEffectInstance(MobEffects.POISON, 100, 1, false, true));
                 default -> {

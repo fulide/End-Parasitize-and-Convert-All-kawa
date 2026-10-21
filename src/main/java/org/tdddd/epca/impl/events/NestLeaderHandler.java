@@ -22,6 +22,7 @@ import org.tdddd.epca.impl.overworld.data.organ.OrganSlotGroup;
 import org.tdddd.epca.impl.overworld.data.organ.stats.OrganStatSummary;
 import org.tdddd.epca.impl.overworld.registry.ModEffects;
 import net.neoforged.fml.common.EventBusSubscriber;
+import org.tdddd.epca.impl.compat.EffectCompat;
 
 @EventBusSubscriber(modid = epca.MODID)
 public class NestLeaderHandler {
@@ -169,7 +170,7 @@ public class NestLeaderHandler {
         if (!NestLeaderManager.isNestLeader(player.getUUID())) return;
         Holder<MobEffect> effect = event.getEffectInstance().getEffect();
         if (effect.is(MobEffects.POISON) || effect.is(MobEffects.HUNGER) || effect.is(MobEffects.CONFUSION) ||
-                effect.is(ModEffects.COTH) || effect.is(ModEffects.VIRAL) || effect.is(ModEffects.FEAR) ||
+                effect.is(ModEffects.COTH) || EffectCompat.isViral(effect) || effect.is(ModEffects.FEAR) ||
                 effect.is(ModEffects.SOLIDIFY) || effect.is(ModEffects.CORROSIVE) || effect.is(ModEffects.CONTEMPT_INORGANIC) ||
                 effect.is(ModEffects.NEEDLER)) {
             event.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
@@ -216,4 +217,3 @@ public class NestLeaderHandler {
     // MobEffects  import POISON/HUNGER/CONFUSIONMobEffectInstance
     //  LivingEntity  STAGE B  proc
 }
-
