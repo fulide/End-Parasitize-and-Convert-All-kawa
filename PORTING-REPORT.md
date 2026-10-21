@@ -335,6 +335,22 @@ cd D:\dev\projects\epca-1.21.1
     `mapBleeding/mapViral` 正确重映射、`aliasBleeding/aliasViral` 正确回指、非免疫生物（牛）两个效果都挂上、
     免疫的虫族替身被正确拦下。
 
+24. **🔴 感染生物"倒地→爆炸→倒地"多播一次死亡动画（已修复）**
+    现象：`epca:infested_zombie` 等假死生物，观感是"倒地→爆炸→倒地"，比预期多一次倒地。
+    定位（服务端逐 tick 日志）：假死流程本身只有一次（`die()` → 30 tick → `onFakeDeathEnd` → 爆开 → `discard()`），
+    所以问题在**动画时长与假死时长完全相等**：
+    - `assets/epca/animations/infested_zombie.animation.json` 里 `dead` 动画长度 = **1.5 秒**；
+    - `fakeDeathDuration` = **30 tick = 1.5 秒**；
+    - 而动画用的是 `RawAnimation.begin().thenLoop("dead")`（循环）。
+    ⇒ 第 30 tick 动画正好播放完并**从头重播**（重新倒地），同一 tick 触发爆开、随后实体被移除，
+    于是看到"倒地 → 爆炸 → 又倒一次"。
+    修复：把**假死分支**里的 `thenLoop("dead…")` 全部改成 `thenPlay("dead…")`（一次性、停在最后一帧）——
+    共 16 个实体（Bat/Chicken/Cow/Drowned×2/Fox/Husk/Pig/Pillager/Sheep/Skeleton/Villager/Vindicator/Wolf/
+    Zombie/ZombieVillager/ReshapeLongarms）。`InfestedEnderman`、`InfestedSlime*`、`InfestedSpider`、
+    `WalkingSpiderHead` 本来就是 `thenPlay`/triggerable，不用改。
+    ⚠️ 没有改动 `isExploding()` 分支（`LargeIncompleteForm`/`ReshapeYelloweye`）和方块实体
+    `SwallowCystBlockEntity` 的 `dead_idle`——那不是假死动画。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。

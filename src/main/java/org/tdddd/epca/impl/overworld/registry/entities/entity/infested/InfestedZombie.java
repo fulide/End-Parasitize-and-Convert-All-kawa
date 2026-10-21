@@ -259,7 +259,7 @@ public class InfestedZombie extends AbstractInfestedEntity implements IHeadRotat
 
     private PlayState animationPredicate(AnimationState<InfestedZombie> event) {
         if (this.isFakingDeath()) {
-            event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
         } else if (this.isRunning()) {
             event.getController().setAnimation(RawAnimation.begin().thenLoop("run"));
         } else if (this.isWalking()) {

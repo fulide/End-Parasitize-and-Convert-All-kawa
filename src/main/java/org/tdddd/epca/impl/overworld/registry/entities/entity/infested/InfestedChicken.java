@@ -676,7 +676,7 @@ public class InfestedChicken extends PathfinderMob implements GeoEntity, IParasi
     private PlayState mainAnimationPredicate(AnimationState<InfestedChicken> event) {
         
         if (this.isFakingDeath()) {
-            event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
             return PlayState.CONTINUE;
         }
 

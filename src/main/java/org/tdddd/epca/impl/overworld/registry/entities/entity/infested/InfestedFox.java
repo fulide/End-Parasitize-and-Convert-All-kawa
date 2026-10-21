@@ -580,7 +580,7 @@ public class InfestedFox extends PathfinderMob implements GeoEntity, IParasite, 
 
         
         if (this.isFakingDeath()) {
-            event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
         }else if (this.isPouncing() || !this.onGround()) {
             event.getController().setAnimation(RawAnimation.begin().thenLoop("idle_air"));
         } else if (this.isRunning()) {

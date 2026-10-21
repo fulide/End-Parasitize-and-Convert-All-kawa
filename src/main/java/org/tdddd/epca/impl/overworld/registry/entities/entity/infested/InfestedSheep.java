@@ -547,7 +547,7 @@ public class InfestedSheep extends PathfinderMob implements GeoEntity, IParasite
 
     private PlayState animationPredicate(AnimationState<InfestedSheep> event) {
         if (this.isFakingDeath()) {
-            event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
         } else if (this.isRunning()) {
             event.getController().setAnimation(RawAnimation.begin().thenLoop("run"));
         } else if (this.isWalking()) {

@@ -500,7 +500,7 @@ public class InfestedCow extends PathfinderMob implements GeoEntity, IParasite, 
 
     private PlayState playState(AnimationState<InfestedCow> event) {
         if (this.isFakingDeath()) {
-            event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
         } else if (this.isRunning()) {
             event.getController().setAnimation(RawAnimation.begin().thenLoop("run"));
         } else if (this.isWalking()) {

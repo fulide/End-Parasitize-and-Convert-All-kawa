@@ -845,7 +845,7 @@ public class InfestedDrowned extends PathfinderMob implements GeoEntity, IParasi
         if (inWater) {
             
             if (this.isFakingDeath()) {
-                event.getController().setAnimation(RawAnimation.begin().thenLoop("dead_water"));
+                event.getController().setAnimation(RawAnimation.begin().thenPlay("dead_water"));
             } else if (event.isMoving()) {
                 
                 event.getController().setAnimation(RawAnimation.begin().thenLoop("swim"));
@@ -856,7 +856,7 @@ public class InfestedDrowned extends PathfinderMob implements GeoEntity, IParasi
         } else {
             
             if (this.isFakingDeath()) {
-                event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+                event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
             } else if (this.isRunning()) {
                 event.getController().setAnimation(RawAnimation.begin().thenLoop("run"));
             } else if (this.isWalking()) {

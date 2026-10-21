@@ -460,7 +460,7 @@ public class InfestedBat extends PathfinderMob implements GeoEntity, IParasite, 
         BatState state = this.getCurrentState();
 
         if (this.isFakingDeath()) {
-            event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
         } else if (this.isResting()) {
             event.getController().setAnimation(RawAnimation.begin().thenLoop("idle"));
         } else switch (state) {

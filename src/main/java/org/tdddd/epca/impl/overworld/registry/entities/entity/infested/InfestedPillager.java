@@ -530,7 +530,7 @@ public class InfestedPillager  extends PathfinderMob implements GeoEntity, IPara
 
         
         if (this.isFakingDeath()) {
-            event.getController().setAnimation(RawAnimation.begin().thenLoop("dead_pillager"));
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("dead_pillager"));
         } else if (this.isRunning()) {
             event.getController().setAnimation(RawAnimation.begin().thenLoop("run_pillager"));
         } else if (this.isWalking()) {

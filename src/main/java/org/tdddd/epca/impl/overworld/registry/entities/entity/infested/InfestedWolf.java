@@ -666,7 +666,7 @@ public class InfestedWolf extends PathfinderMob implements IOverlayRenderable, G
 
         
         if (this.isFakingDeath()) {
-            event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+            event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
         }
         
         else if (this.isHowling()) {

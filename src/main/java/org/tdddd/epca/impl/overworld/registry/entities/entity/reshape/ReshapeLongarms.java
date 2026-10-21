@@ -1263,7 +1263,7 @@ public class ReshapeLongarms extends PathfinderMob implements GeoEntity, IParasi
 
     private PlayState playState(AnimationState<ReshapeLongarms> event) {
         if (this.isRemoved() || !this.isAlive()) return PlayState.STOP;
-        if (this.isFakingDeath()) event.getController().setAnimation(RawAnimation.begin().thenLoop("dead"));
+        if (this.isFakingDeath()) event.getController().setAnimation(RawAnimation.begin().thenPlay("dead"));
         else if (this.isGassing()) event.getController().setAnimation(RawAnimation.begin().thenLoop("gassing"));
         else if (this.isShockwaveAttacking()) event.getController().setAnimation(RawAnimation.begin().thenPlay("shockwave_big"));
         else if (this.isStomping()) {
