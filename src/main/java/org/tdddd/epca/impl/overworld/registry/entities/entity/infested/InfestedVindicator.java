@@ -473,7 +473,8 @@ public class InfestedVindicator extends PathfinderMob implements GeoEntity, IPar
         }
 
         
-        if (isFakingDeath() || isInvulnerable()) {
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) {
             return false;
         }
 

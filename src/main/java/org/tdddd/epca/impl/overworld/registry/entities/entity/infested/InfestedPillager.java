@@ -486,7 +486,8 @@ public class InfestedPillager  extends PathfinderMob implements GeoEntity, IPara
         }
 
         
-        if (isFakingDeath() || isInvulnerable()) {
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) {
             return false;
         }
 

@@ -13,6 +13,7 @@
     "common.LivingEntityMixin",
     "common.MerchantOfferMixin",
     "common.MobMixin",
+    "common.MobPeacefulMixin",
     "common.PlayerMixin",
     "common.PointedDripstoneBlockMixin",
     "common.SugarCaneBlockMixin"

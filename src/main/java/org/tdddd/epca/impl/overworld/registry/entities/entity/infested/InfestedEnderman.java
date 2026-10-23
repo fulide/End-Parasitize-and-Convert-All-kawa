@@ -1058,7 +1058,8 @@ public class InfestedEnderman extends PathfinderMob implements GeoEntity, IParas
         if (source.getEntity() instanceof LivingEntity attacker) {
             if (shouldIgnoreDamageFrom(attacker)) return false;
         }
-        if (isFakingDeath() || isInvulnerable()) return false;
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) return false;
 
         boolean unstable = this.getVariant() == Variant.UNSTABLE;
 

@@ -49,8 +49,18 @@ public abstract class MobMixin {
         }
 
         
-        boolean canDespawn = NaturalSpawnProtection.canBeNaturallyDespawned(mob);
+        boolean canDespawn = NaturalSpawnProtection.canBeNaturallyDespawnedCached(mob);
         if (!canDespawn) {
+            // Let vanilla distance-despawn non-persistent parasites, otherwise a swarm that walked
+            // away from the player can only ever grow (and keeps ticking forever).
+            if (!mob.isPersistenceRequired() && !mob.requiresCustomPersistence()) {
+                net.minecraft.world.entity.player.Player nearest =
+                        level.getNearestPlayer(mob, -1.0D);
+                double distance = org.tdddd.epca.impl.ModConfig.getDespawnDistanceBlocks();
+                if (nearest == null || mob.distanceToSqr(nearest) > distance * distance) {
+                    return;     // fall through to the vanilla distance despawn
+                }
+            }
             mob.setNoActionTime(0);
             ci.cancel();
         }

@@ -19,7 +19,9 @@ public class CamouflageEffect extends MobEffect implements RemovableEffect {
 
     @Override
     public boolean applyEffectTick(LivingEntity livingEntity, int amplifier) {
-        if (!livingEntity.level().isClientSide && livingEntity.tickCount % 20 == 0) {
+        int auraInterval = org.tdddd.epca.impl.ModConfig.getAuraScanIntervalTicks();
+        if (!livingEntity.level().isClientSide
+                && (livingEntity.tickCount + livingEntity.getId()) % auraInterval == 0) {
             livingEntity.level().getEntitiesOfClass(Mob.class,
                     livingEntity.getBoundingBox().inflate(30),
                     mob -> mob.getTarget() == livingEntity
@@ -55,7 +57,7 @@ public class CamouflageEffect extends MobEffect implements RemovableEffect {
 
     @Override
     public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-        return duration % 20 == 0;
+        return duration % org.tdddd.epca.impl.ModConfig.getAuraScanIntervalTicks() == 0;
     }
 
     

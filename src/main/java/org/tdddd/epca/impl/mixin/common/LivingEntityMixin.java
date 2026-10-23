@@ -140,6 +140,13 @@ public abstract class LivingEntityMixin {
         if (processingSetHealth.get()) return;
 
         LivingEntity self = (LivingEntity) (Object) this;
+
+        // Fast path: only players (KillStick) or entities with the soul-protection shield can be
+        // affected here, so skip the whole pipeline for ordinary mobs.
+        if (!(self instanceof Player) && !self.hasEffect(ModEffects.SOUL_PROTECTION)) {
+            return;
+        }
+
         float oldHealth = self.getHealth();
 
         if (newHealth < oldHealth) {

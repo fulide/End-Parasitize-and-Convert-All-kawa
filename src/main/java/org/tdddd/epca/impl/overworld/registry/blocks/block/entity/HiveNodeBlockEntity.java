@@ -233,7 +233,20 @@ public class HiveNodeBlockEntity extends BlockEntity {
      * Rebuilds the structure flag: nodes within 24 blocks of each other are linked, and a connected
      * group of at least three nodes is a hive structure.
      */
+    /** 昂贵扫描前的统一守卫：范围内没有玩家时，服务端不需要推进这些效果。 */
+    private boolean hasNearbyPlayer(net.minecraft.server.level.ServerLevel level) {
+        double range = org.tdddd.epca.impl.ModConfig.getHiveNodeActiveRange();
+        return level.getNearestPlayer(
+                this.worldPosition.getX() + 0.5D,
+                this.worldPosition.getY() + 0.5D,
+                this.worldPosition.getZ() + 0.5D,
+                range, false) != null;
+    }
+
     private void updateStructure(net.minecraft.server.level.ServerLevel level) {
+        if (!hasNearbyPlayer(level)) {
+            return;
+        }
         java.util.List<BlockPos> nodes = new java.util.ArrayList<>();
         int search = STRUCTURE_LINK_DISTANCE;
         for (BlockPos pos : BlockPos.betweenClosed(
@@ -278,6 +291,9 @@ public class HiveNodeBlockEntity extends BlockEntity {
      * normal wandering there.</p>
      */
     private void attractFeeders(net.minecraft.server.level.ServerLevel level) {
+        if (!hasNearbyPlayer(level)) {
+            return;
+        }
         net.minecraft.world.phys.AABB area =
                 new net.minecraft.world.phys.AABB(this.worldPosition).inflate(FEED_ATTRACT_RADIUS);
         for (net.minecraft.world.entity.Mob mob
@@ -319,6 +335,9 @@ public class HiveNodeBlockEntity extends BlockEntity {
 
     /** Refreshes the Link effect on parasites within 16 blocks. */
     private void applyLink(net.minecraft.server.level.ServerLevel level) {
+        if (!hasNearbyPlayer(level)) {
+            return;
+        }
         net.minecraft.world.phys.AABB area =
                 new net.minecraft.world.phys.AABB(this.worldPosition).inflate(LINK_RADIUS);
         for (net.minecraft.world.entity.LivingEntity living
@@ -345,6 +364,9 @@ public class HiveNodeBlockEntity extends BlockEntity {
      * it, and the ripper is replaced by a fresh node that starts empty.</p>
      */
     private void absorbRipper(net.minecraft.server.level.ServerLevel level) {
+        if (!hasNearbyPlayer(level)) {
+            return;
+        }
         if (this.killCount < RIPPER_GROWTH_COST) {
             return;
         }
@@ -374,6 +396,9 @@ public class HiveNodeBlockEntity extends BlockEntity {
      * stage I, and both limits live in BlockConversionManager's own configs.</p>
      */
     private void infestNearby(net.minecraft.server.level.ServerLevel level) {
+        if (!hasNearbyPlayer(level)) {
+            return;
+        }
         // configurable switch: some packs want the parasites without the terrain being eaten
         if (!org.tdddd.epca.impl.ModConfig.isHiveNodeInfestationEnabled()) {
             return;
@@ -437,6 +462,10 @@ public class HiveNodeBlockEntity extends BlockEntity {
     }
 
     private void advanceCaptiveGrowth() {
+        if (!(this.level instanceof net.minecraft.server.level.ServerLevel serverLevel)
+                || !hasNearbyPlayer(serverLevel)) {
+            return;
+        }
         if (!(this.level instanceof net.minecraft.server.level.ServerLevel level)) {
             return;
         }

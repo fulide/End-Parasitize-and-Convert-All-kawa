@@ -105,7 +105,33 @@ public class NaturalSpawnProtection {
     }
 
     
+    /** @deprecated kept for compatibility; the effective radius is a config value now. */
+    @Deprecated
     public static final int CHECK_RADIUS = 256;
+
+    /** 每个生物上一次检查的结果与时间，避免"每 tick 一次 256 格实体查询"。 */
+    private static final java.util.WeakHashMap<Mob, long[]> DESPAWN_CACHE = new java.util.WeakHashMap<>();
+
+    /**
+     * 带缓存的刷怪保护检查：同一个生物每 {@code despawnCheckIntervalTicks} 才真正查询一次，
+     * 其余 tick 复用上次结果。
+     */
+    public static boolean canBeNaturallyDespawnedCached(Mob mob) {
+        if (!(mob.level() instanceof ServerLevel serverLevel)) {
+            return true;
+        }
+        long now = serverLevel.getGameTime();
+        int interval = org.tdddd.epca.impl.ModConfig.getDespawnCheckIntervalTicks();
+
+        long[] cached = DESPAWN_CACHE.get(mob);
+        if (cached != null && now - cached[0] < interval && now >= cached[0]) {
+            return cached[1] != 0L;
+        }
+
+        boolean result = canBeNaturallyDespawned(mob);
+        DESPAWN_CACHE.put(mob, new long[]{now, result ? 1L : 0L});
+        return result;
+    }
 
     
     private static final double PLAYER_COUNT_BONUS = 0.10;
@@ -180,7 +206,8 @@ public class NaturalSpawnProtection {
 
         
         double distanceSq = mob.distanceToSqr(nearestPlayer);
-        if (distanceSq > CHECK_RADIUS * CHECK_RADIUS) {
+        int checkRadius = org.tdddd.epca.impl.ModConfig.getDespawnCheckRadius();
+        if (distanceSq > (double) checkRadius * checkRadius) {
             return true;
         }
 
@@ -191,7 +218,8 @@ public class NaturalSpawnProtection {
         }
 
         
-        int countInRadius = countMobsInRadius(serverLevel, nearestPlayer, category, CHECK_RADIUS);
+        int countInRadius = countMobsInRadius(serverLevel, nearestPlayer, category,
+                org.tdddd.epca.impl.ModConfig.getDespawnCheckRadius());
 
         
         return countInRadius > threshold;

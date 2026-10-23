@@ -14,6 +14,10 @@ import net.neoforged.fml.common.EventBusSubscriber;
 @EventBusSubscriber(modid = epca.MODID)
 public class InfestedUndeadHandler {
 
+    /** 每个受害者上一次广播的时间，避免 AoE 伤害把整片虫群每 tick 刷一遍。 */
+    private static final java.util.WeakHashMap<LivingEntity, Long> LAST_BROADCAST =
+            new java.util.WeakHashMap<>();
+
     @SubscribeEvent
     public static void onLivingHurt(LivingIncomingDamageEvent event) {
         LivingEntity victim = event.getEntity();
@@ -26,6 +30,13 @@ public class InfestedUndeadHandler {
         }
 
         if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
+
+        long now = level.getGameTime();
+        Long last = LAST_BROADCAST.get(victim);
+        if (last != null && now - last < org.tdddd.epca.impl.ModConfig.getAttackBroadcastCooldownTicks()) {
+            return;
+        }
+        LAST_BROADCAST.put(victim, now);
 
         double followRange = victim.getAttributeValue(Attributes.FOLLOW_RANGE);
         double radius = followRange * 2.0;

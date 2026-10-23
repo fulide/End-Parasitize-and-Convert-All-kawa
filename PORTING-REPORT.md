@@ -392,6 +392,48 @@ cd D:\dev\projects\epca-1.21.1
     - 第二种生物（`epca:infested_husk`，走 `IInfested` 路径而不是 `EntityBreakUtils`）：
       `mobGriefing=false` 时火把 8 秒后仍在（Test passed）；`mobGriefing=true` 时被拆（Test failed）。
 
+27. **🔴 大多数虫族并没有继承 `AbstractEpcaEntity`（和平难度漏网的真凶）**
+    用户反馈"还有生物不受约束，比如 `epca:infested_slime`，`ripper` 也不受约束"。排查后确认：
+    约 55 个实体类（`Ripper`、`InfestedSlimeSize0/1/3`、`Walking*Head`、`InfestedBat/Chicken/Cow/...`）
+    都是 **`public class X extends PathfinderMob implements ... IParasite ...`**，并不继承 `AbstractEpcaEntity`。
+    §7.25 里所有"基类级"修复（`shouldDespawnInPeaceful`、`hurt` 的穿透放行）对它们**全部无效**。
+    修复：
+    - 新增 **`mixin/common/MobPeacefulMixin`**：在 `Mob#shouldDespawnInPeaceful` 的 HEAD 注入，
+      只要实体是 `IParasite`/`IInfested` 就返回 `true` ⇒ 所有虫族（含未来新增的）在和平难度下都会被原版
+      `checkDespawn` 清掉，不再需要逐个类覆写；
+    - 18 个类的 `hurt()` 里 `if (isFakingDeath() || isInvulnerable()) return false;` 改为
+      **穿透伤害（`BYPASSES_INVULNERABILITY`，即 `/kill`、虚空）不受该判断影响**；
+    - `Curbug` 羽化成 ripper、`FlyingCarrier`/`LightCarrier`/`LargeIncompleteForm` 死亡爆 ripper、
+      史莱姆分裂出小史莱姆，全部加 `canSpawnHostiles` 判定（和平/关 `doMobSpawning` 时不再产生）。
+    验证（专用服务端 RCON）：
+    - 和平难度下 `epca:infested_slime_size3`、`epca:ripper`、`epca:walking_husk_head` 3 秒内全部清除（Test failed）；
+    - 普通难度召唤 10 只 ripper → `/kill` → 3 秒后无残留。
+    ℹ️ `ripper` 的定位（回答"是否中立"）：它 **不是中立生物**，而是"群居型游击虫"——
+    `AvoidNonLeaderPlayersGoal`（优先级 0）在**周围 ripper 少于 3 只时逃离非领巢者玩家**，
+    `PriorityTargetGoal` 只在**进化阶段 2–13** 才索敌，另有优先级 3 的 `ConditionalAttackGoal`。
+    所以单只 ripper 看起来像中立：靠近它会跑，成群或阶段够高才会主动围攻。
+
+28. **🟢 性能优化：把"每 tick 无上限扫描"全部摊开（实测 ≈2.7×）**
+    三处主因都确认存在（`ServerLevel#tick` 每 tick 对每个实体调 `checkDespawn()`；`GoalSelector#tick` 每 tick 对所有未运行目标调 `canUse()`），
+    修改如下（全部走配置，可关回原行为）：
+    | 键（默认） | 改动 |
+    |---|---|
+    | `lightScanIntervalTicks=40` | 拆灯扫描无论是否找到都回退 40 tick（原先找不到就每 tick 重扫 17³=4913 格）；`IInfested` 版本顺手去掉每 tick 的 List 分配 |
+    | `despawnCheckIntervalTicks=20` + `despawnCheckRadius=64` | `NaturalSpawnProtection` 增加 **WeakHashMap 缓存**，同一生物 20 tick 才真正查一次；半径 256→64（256 等于全加载区） |
+    | `despawnDistanceBlocks=128` | `MobMixin` 不再无条件取消距离消失：非持久化虫族离玩家超过 128 格时交给原版距离 despawn（虫群不再只增不减） |
+    | `targetScanIntervalTicks=10` | `PriorityTargetGoal`/`GenericPriorityTargetGoal` 的 AABB 索敌改成 `(tickCount+id)%N` 错峰（原版 `NearestAttackableTargetGoal` 同款节流）；强制目标仍 O(1) 立即生效 |
+    | `auraScanIntervalTicks=40` | `CamouflageEffect`/`SpiritEffect` 的 30 格光环扫描错峰并延长间隔 |
+    | `hiveNodeActiveRange=128` | 蜂巢节点的 5 个扫描（结构/吸引/链接/吸收/感染）与 curbug 成长，在范围内无玩家时直接跳过 |
+    | `attackBroadcastCooldownTicks=20` | `InfestedUndeadHandler` 每个受害者 1 秒内只广播一次仇恨（AoE 不再刷整片虫群） |
+    另：`InfestedZombie` 的 3 次 `getGroundHeightAt` 改为每 5 tick 一次；`EntityAttackEffectManager` 空配置返回 `List.of()`；
+    `LivingEntityMixin#onSetHealth` 对"非玩家且无灵魂保护"的实体直接早退。
+    实测（同一构建、同一世界、`/summon` 150 只感染僵尸，`MinecraftServer#getCurrentSmoothedTickTime`）：
+    | 配置 | 半径 64 内生物数 | 平滑 tick 时间 |
+    |---|---|---|
+    | 优化后（默认值） | 242 ~ 258 | **8.1 ~ 8.3 ms** |
+    | 原行为（interval=1、半径 256） | 249 ~ 279 | **22.4 ~ 25.0 ms** |
+    ⇒ 每只生物摊到约 0.033 ms → 0.090 ms，同等虫量下 **≈2.7 倍**。注意这是"全部生物空闲挂机"的场景（索敌/拆灯扫描正好是空闲时最贵），实战（有玩家、有战斗）比例会小一些。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。

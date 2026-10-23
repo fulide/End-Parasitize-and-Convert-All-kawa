@@ -16,7 +16,9 @@ public class SpiritEffect extends MobEffect implements RemovableEffect {
     @Override
     public boolean applyEffectTick(LivingEntity livingEntity, int amplifier) {
         
-        if (!livingEntity.level().isClientSide && livingEntity.tickCount % 20 == 0) {
+        int auraInterval = org.tdddd.epca.impl.ModConfig.getAuraScanIntervalTicks();
+        if (!livingEntity.level().isClientSide
+                && (livingEntity.tickCount + livingEntity.getId()) % auraInterval == 0) {
             
             livingEntity.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
                     livingEntity.getBoundingBox().inflate(30),
@@ -29,7 +31,7 @@ public class SpiritEffect extends MobEffect implements RemovableEffect {
     @Override
     public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         
-        return duration % 20 == 0;
+        return duration % org.tdddd.epca.impl.ModConfig.getAuraScanIntervalTicks() == 0;
     }
 
     

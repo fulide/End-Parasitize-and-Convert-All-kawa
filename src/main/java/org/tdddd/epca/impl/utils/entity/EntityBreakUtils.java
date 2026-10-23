@@ -46,12 +46,14 @@ public final class EntityBreakUtils {
                 if (block instanceof TorchBlock || block == Blocks.LANTERN || block == Blocks.SOUL_LANTERN
                         || block == Blocks.SEA_LANTERN || block == Blocks.GLOWSTONE
                         || block == Blocks.SHROOMLIGHT || block == Blocks.JACK_O_LANTERN) {
-                    level.destroyBlock(pos, true, entity);
-                    return LIGHT_BREAK_COOLDOWN;
+                    org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(level, pos, true, entity);
+                    return Math.max(LIGHT_BREAK_COOLDOWN,
+                            org.tdddd.epca.impl.ModConfig.getLightScanIntervalTicks());
                 }
             }
         }
-        return 0;
+        // Nothing found: still back off, otherwise every mob re-scans ~5k blocks every tick.
+        return org.tdddd.epca.impl.ModConfig.getLightScanIntervalTicks();
     }
 
     /**

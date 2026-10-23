@@ -208,7 +208,8 @@ public class InfestedBat extends PathfinderMob implements GeoEntity, IParasite, 
                 return false;
             }
         }
-        if (isFakingDeath() || isInvulnerable()) {
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) {
             return false;
         }
 

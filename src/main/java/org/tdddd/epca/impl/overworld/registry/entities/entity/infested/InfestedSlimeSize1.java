@@ -200,7 +200,7 @@ public class InfestedSlimeSize1 extends PathfinderMob implements GeoEntity, IPar
                                 smallSlime.igniteForSeconds((float)(this.getRemainingFireTicks() / 20));
                             }
 
-                            this.level().addFreshEntity(smallSlime);
+                            if (org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(this.level())) { this.level().addFreshEntity(smallSlime); }
                         }
                     }
                 }
@@ -354,7 +354,7 @@ public class InfestedSlimeSize1 extends PathfinderMob implements GeoEntity, IPar
                         
                         smallSlime.igniteForSeconds((float)(this.getRemainingFireTicks() / 20));
 
-                        this.level().addFreshEntity(smallSlime);
+                        if (org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(this.level())) { this.level().addFreshEntity(smallSlime); }
                     }
                 }
             }
@@ -375,7 +375,7 @@ public class InfestedSlimeSize1 extends PathfinderMob implements GeoEntity, IPar
                         double offsetX = (this.random.nextDouble() - 0.5D) * 2.0D;
                         double offsetZ = (this.random.nextDouble() - 0.5D) * 2.0D;
                         smallSlime.setPos(this.getX() + offsetX, this.getY() + 0.5D, this.getZ() + offsetZ);
-                        this.level().addFreshEntity(smallSlime);
+                        if (org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(this.level())) { this.level().addFreshEntity(smallSlime); }
                     }
                 }
             }
@@ -387,7 +387,8 @@ public class InfestedSlimeSize1 extends PathfinderMob implements GeoEntity, IPar
     @Override
     public boolean hurt(DamageSource source, float amount) {
         
-        if (isFakingDeath() || isInvulnerable()) {
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) {
             return false;
         }
 

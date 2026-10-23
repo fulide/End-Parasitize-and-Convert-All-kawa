@@ -75,6 +75,13 @@ PORTING-REPORT.md                            完整移植报告（依赖决策/�
 | `hiveNodeInfestationEnabled` | `true` | 蜂巢节点是否转化周围方块（`false` = 不啃地图） |
 | `hiveNodeInfestationRadius` | `8` | 转化球体半径（0–32，`0` 等效关闭） |
 | `safetyDayEnabled` / `safetyDayDurationTicks` | `false` / `60000` | 安全日（期间自然生成的虫族直接消失） |
+| `lightScanIntervalTicks` | `40` | 拆灯扫描间隔（每只虫） |
+| `targetScanIntervalTicks` | `10` | 索敌扫描间隔 |
+| `despawnCheckIntervalTicks` / `despawnCheckRadius` | `20` / `64` | 刷怪上限检查的间隔与半径 |
+| `despawnDistanceBlocks` | `128` | 非持久化虫族离玩家超过此距离可自然消失 |
+| `auraScanIntervalTicks` | `40` | 伪装/灵体光环扫描间隔 |
+| `hiveNodeActiveRange` | `128` | 该范围内没有玩家时蜂巢节点跳过昂贵扫描 |
+| `attackBroadcastCooldownTicks` | `20` | 受击广播仇恨的最小间隔 |
 
 行为约定：虫族在**和平难度**下不会生成、已有的会被清除；`mobGriefing=false` 时它们不会破坏任何方块（拆灯、破冰、信标清场、节点转化都会停）。
 

@@ -470,7 +470,8 @@ public class InfestedFox extends PathfinderMob implements GeoEntity, IParasite, 
         }
 
         
-        if (isFakingDeath() || isInvulnerable()) {
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) {
             return false;
         }
 

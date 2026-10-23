@@ -404,7 +404,8 @@ public class InfestedSlimeSize3 extends PathfinderMob implements GeoEntity, IPar
     @Override
     public boolean hurt(DamageSource source, float amount) {
         
-        if (isFakingDeath() || isInvulnerable()) {
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) {
             return false;
         }
 

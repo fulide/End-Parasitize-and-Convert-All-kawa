@@ -105,7 +105,7 @@ public class InfestedZombie extends AbstractInfestedEntity implements IHeadRotat
             // Cliff jumping
             if (jumpCooldown > 0) jumpCooldown--;
 
-            if (jumpCooldown == 0 && this.onGround() && !this.isInWater()) {
+            if (jumpCooldown == 0 && this.tickCount % 5 == 0 && this.onGround() && !this.isInWater()) {
                 LivingEntity target = this.getTarget();
                 if (target != null) {
                     double dx = target.getX() - this.getX();

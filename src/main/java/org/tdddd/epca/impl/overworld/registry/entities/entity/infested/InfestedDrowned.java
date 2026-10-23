@@ -742,7 +742,8 @@ public class InfestedDrowned extends PathfinderMob implements GeoEntity, IParasi
         }
 
         
-        if (isFakingDeath() || isInvulnerable()) {
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) {
             return false;
         }
 

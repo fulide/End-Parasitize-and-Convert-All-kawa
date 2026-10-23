@@ -242,6 +242,10 @@ public class Curbug extends AbstractOnesentEntity {
 
     private void growIntoRupter() {
         if (!(this.level() instanceof ServerLevel serverLevel)) return;
+        if (!org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(serverLevel)) {
+            this.discard();
+            return;
+        }
         Ripper rupter = ModEntities.RIPPER.get().create(serverLevel);
         if (rupter != null) {
             rupter.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());

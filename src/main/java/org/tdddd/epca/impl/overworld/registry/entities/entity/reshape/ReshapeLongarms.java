@@ -1243,7 +1243,8 @@ public class ReshapeLongarms extends PathfinderMob implements GeoEntity, IParasi
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (source.getEntity() instanceof LivingEntity attacker && shouldIgnoreDamageFrom(attacker)) return false;
-        if (isFakingDeath() || isInvulnerable()) return false;
+        if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)
+                && (isFakingDeath() || isInvulnerable())) return false;
         if (!this.level().isClientSide && source.getEntity() instanceof LivingEntity attacker) this.onAttacked(attacker);
         return super.hurt(source, amount);
     }

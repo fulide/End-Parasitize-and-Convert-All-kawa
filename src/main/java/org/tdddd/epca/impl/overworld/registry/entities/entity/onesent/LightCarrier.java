@@ -241,7 +241,7 @@ public class LightCarrier extends PathfinderMob implements GeoEntity, IParasite,
             }
 
             
-            int rupterCount = 2 + this.random.nextInt(2);
+            int rupterCount = org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(this.level()) ? 2 + this.random.nextInt(2) : 0;
             for (int i = 0; i < rupterCount; i++) {
                 EntityType<?> rupterType = ModEntities.RIPPER.get();
                 Entity rupter = rupterType.create(this.level());

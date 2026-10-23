@@ -35,6 +35,24 @@ public class ModConfig {
     public static final ModConfigSpec.BooleanValue HIVE_NODE_INFEST_ENABLED;
     /** 蜂巢节点转化方块的球体半径（格）。 */
     public static final ModConfigSpec.IntValue HIVE_NODE_INFEST_RADIUS;
+
+    // ---- performance knobs -------------------------------------------------------------------
+    /** 拆灯扫描间隔（tick）。原来是"没找到灯就每 tick 重扫"，这里给它一个下限。 */
+    public static final ModConfigSpec.IntValue LIGHT_SCAN_INTERVAL_TICKS;
+    /** 刷怪保护检查的间隔（tick）。 */
+    public static final ModConfigSpec.IntValue DESPAWN_CHECK_INTERVAL_TICKS;
+    /** 刷怪保护统计的半径（格）。原版实现写死 256，等价于"永远在范围内"。 */
+    public static final ModConfigSpec.IntValue DESPAWN_CHECK_RADIUS;
+    /** 超过这个距离且非持久化的虫族允许像原版一样自然消失（防虫群无限堆积）。 */
+    public static final ModConfigSpec.IntValue DESPAWN_DISTANCE_BLOCKS;
+    /** 索敌扫描间隔（tick）。原版 NearestAttackableTargetGoal 也是 1~10 tick 的随机间隔。 */
+    public static final ModConfigSpec.IntValue TARGET_SCAN_INTERVAL_TICKS;
+    /** 伪装/灵体这类"光环"类效果的扫描间隔（tick）。 */
+    public static final ModConfigSpec.IntValue AURA_SCAN_INTERVAL_TICKS;
+    /** 蜂巢节点/领巢者方块的主动扫描范围（格），范围内没有玩家就跳过昂贵扫描。 */
+    public static final ModConfigSpec.IntValue HIVE_NODE_ACTIVE_RANGE;
+    /** 受击时向同类广播仇恨的最小间隔（tick）。 */
+    public static final ModConfigSpec.IntValue ATTACK_BROADCAST_COOLDOWN_TICKS;
     static {
         BUILDER.push("End-Parasitize and Convert All Configuration");
 
@@ -104,6 +122,50 @@ public class ModConfig {
                         "Default: 8")
                 .defineInRange("hiveNodeInfestationRadius", 8, 0, 32);
 
+        BUILDER.push("performance");
+
+        LIGHT_SCAN_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) a parasite scans for light sources to break.",
+                        "Default: 40 (was: every tick while no light was found)")
+                .defineInRange("lightScanIntervalTicks", 40, 1, 400);
+
+        DESPAWN_CHECK_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) the parasite spawn-cap check runs per mob.",
+                        "Default: 20")
+                .defineInRange("despawnCheckIntervalTicks", 20, 1, 200);
+
+        DESPAWN_CHECK_RADIUS = BUILDER
+                .comment("Radius (blocks) used by the parasite spawn-cap check. Default: 64",
+                        "The upstream value was 256, which is effectively the whole loaded area.")
+                .defineInRange("despawnCheckRadius", 64, 8, 256);
+
+        DESPAWN_DISTANCE_BLOCKS = BUILDER
+                .comment("A non-persistent parasite further than this from every player may despawn",
+                        "like a vanilla monster, so swarms cannot pile up forever. Default: 128")
+                .defineInRange("despawnDistanceBlocks", 128, 32, 512);
+
+        TARGET_SCAN_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) parasites scan for targets. Default: 10",
+                        "1 = scan every tick (old behaviour)")
+                .defineInRange("targetScanIntervalTicks", 10, 1, 60);
+
+        AURA_SCAN_INTERVAL_TICKS = BUILDER
+                .comment("How often (in ticks) camouflage/spirit-like effects scan for nearby mobs.",
+                        "Default: 40")
+                .defineInRange("auraScanIntervalTicks", 40, 1, 400);
+
+        HIVE_NODE_ACTIVE_RANGE = BUILDER
+                .comment("Hive nodes skip their expensive scans when no player is within this range.",
+                        "Default: 128")
+                .defineInRange("hiveNodeActiveRange", 128, 16, 512);
+
+        ATTACK_BROADCAST_COOLDOWN_TICKS = BUILDER
+                .comment("Minimum interval (ticks) between two 'call nearby kin' broadcasts from one victim.",
+                        "Default: 20")
+                .defineInRange("attackBroadcastCooldownTicks", 20, 1, 200);
+
+        BUILDER.pop();
+
         SAFETY_DAY_DURATION_TICKS = BUILDER
                 .comment(" ",
                         "Safe day duration (game tick)")
@@ -124,6 +186,38 @@ public class ModConfig {
 
     public static boolean isCothLevel4Allowed() {
         return ALLOW_COTH_LEVEL_4.get();
+    }
+
+    public static int getLightScanIntervalTicks() {
+        return Math.max(1, LIGHT_SCAN_INTERVAL_TICKS.get());
+    }
+
+    public static int getDespawnCheckIntervalTicks() {
+        return Math.max(1, DESPAWN_CHECK_INTERVAL_TICKS.get());
+    }
+
+    public static int getDespawnCheckRadius() {
+        return Math.max(8, DESPAWN_CHECK_RADIUS.get());
+    }
+
+    public static int getDespawnDistanceBlocks() {
+        return Math.max(32, DESPAWN_DISTANCE_BLOCKS.get());
+    }
+
+    public static int getTargetScanIntervalTicks() {
+        return Math.max(1, TARGET_SCAN_INTERVAL_TICKS.get());
+    }
+
+    public static int getAuraScanIntervalTicks() {
+        return Math.max(1, AURA_SCAN_INTERVAL_TICKS.get());
+    }
+
+    public static int getHiveNodeActiveRange() {
+        return Math.max(16, HIVE_NODE_ACTIVE_RANGE.get());
+    }
+
+    public static int getAttackBroadcastCooldownTicks() {
+        return Math.max(1, ATTACK_BROADCAST_COOLDOWN_TICKS.get());
     }
 
     public static boolean isHiveNodeInfestationEnabled() {

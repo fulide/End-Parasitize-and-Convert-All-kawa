@@ -87,25 +87,23 @@ public interface IInfested {
             return currentCooldown - 1;
         }
 
-        
         AABB originalBox = mob.getBoundingBox();
 
-        
-        List<BlockPos> blockPositions = BlockPos.betweenClosedStream(originalBox)
-                .map(BlockPos::immutable)
-                .collect(Collectors.toList());
-
-        for (BlockPos pos : blockPositions) {
+        // iterate the box directly (no per-block list allocation) and always back off afterwards
+        BlockPos min = BlockPos.containing(originalBox.minX, originalBox.minY, originalBox.minZ);
+        BlockPos max = BlockPos.containing(originalBox.maxX, originalBox.maxY, originalBox.maxZ);
+        for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
             if (mob.level().isLoaded(pos)) {
                 BlockState state = mob.level().getBlockState(pos);
                 if (isIncompleteLightSource(state)) {
                     org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(mob.level(), pos, true, mob);
-                    return getBreakCooldown();
+                    return Math.max(getBreakCooldown(),
+                            org.tdddd.epca.impl.ModConfig.getLightScanIntervalTicks());
                 }
             }
         }
 
-        return 0;
+        return org.tdddd.epca.impl.ModConfig.getLightScanIntervalTicks();
     }
 
     

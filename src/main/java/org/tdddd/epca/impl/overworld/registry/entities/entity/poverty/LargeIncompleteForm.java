@@ -252,7 +252,7 @@ public class LargeIncompleteForm extends PathfinderMob implements GeoEntity, IPa
             }
 
             
-            int rupterCount = this.random.nextInt(2) + 1;
+            int rupterCount = org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(this.level()) ? this.random.nextInt(2) + 1 : 0;
             for (int i = 0; i < rupterCount; i++) {
                 EntityType<?> rupterType = ModEntities.RIPPER.get();
                 Entity rupter = rupterType.create(this.level());

@@ -33,10 +33,17 @@ public class PriorityTargetGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        // a forced target is an O(1) UUID lookup, so always honour it
         LivingEntity forcedTarget = getForcedTarget();
         if (forcedTarget != null && forcedTarget.isAlive() && canTarget(forcedTarget)) {
             this.target = forcedTarget;
             return true;
+        }
+        // the actual search is an AABB entity query: run it on a staggered interval instead of
+        // every tick (vanilla NearestAttackableTargetGoal does the same with a 1..10 tick interval)
+        int scanInterval = org.tdddd.epca.impl.ModConfig.getTargetScanIntervalTicks();
+        if (scanInterval > 1 && (mob.tickCount + mob.getId()) % scanInterval != 0) {
+            return false;
         }
         this.target = getNearestValidTarget();
         
