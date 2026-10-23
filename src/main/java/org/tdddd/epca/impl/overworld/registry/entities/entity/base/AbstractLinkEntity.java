@@ -204,7 +204,7 @@ public abstract class AbstractLinkEntity extends AbstractEpcaEntity implements I
                     if (state.getDestroySpeed(level(), targetPos) <= 3.0f &&
                             state.getDestroySpeed(level(), targetPos) >= 0.0f &&
                             !state.isAir() && state.getFluidState().isEmpty()) {
-                        level().destroyBlock(targetPos, true, this);
+                        org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(level(), targetPos, true, this);
                     }
                 }
             }

@@ -761,7 +761,7 @@ public class StageIBeckon extends PathfinderMob implements GeoEntity, IParasite,
                             !state.isAir() &&
                             state.getFluidState().isEmpty()) {
                         
-                        level().destroyBlock(targetPos, true, this);
+                        org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(level(), targetPos, true, this);
                     }
                 }
             }

@@ -31,6 +31,10 @@ public class ModConfig {
     public static final ModConfigSpec.BooleanValue SAFETY_DAY_ENABLED;
     public static final ModConfigSpec.BooleanValue BECKON_CORE_DEGRADE;
     public static final ModConfigSpec.IntValue SAFETY_DAY_DURATION_TICKS;
+    /** 是否允许蜂巢节点把周围方块转化成虫染方块。 */
+    public static final ModConfigSpec.BooleanValue HIVE_NODE_INFEST_ENABLED;
+    /** 蜂巢节点转化方块的球体半径（格）。 */
+    public static final ModConfigSpec.IntValue HIVE_NODE_INFEST_RADIUS;
     static {
         BUILDER.push("End-Parasitize and Convert All Configuration");
 
@@ -90,6 +94,16 @@ public class ModConfig {
                         "\u5982\u679c\u4e3a true\uff0c\u53ec\u5524\u67f1\u6838\u5fc3\u5728 5 \u5206\u949f\u5185\u6ca1\u6709\u83b7\u5f97\u751f\u7269\u8d28\u65f6\u4f1a\u9000\u5316\u4e3a\u866b\u5de2\u8282\u70b9\u3002\u9ed8\u8ba4\uff1atrue")
                 .define("beckonCoreDegrade", true);
 
+        HIVE_NODE_INFEST_ENABLED = BUILDER
+                .comment("If true, a hive node slowly converts nearby blocks into infested ones.",
+                        "Set to false to keep the world untouched. Default: true")
+                .define("hiveNodeInfestationEnabled", true);
+
+        HIVE_NODE_INFEST_RADIUS = BUILDER
+                .comment("Radius in blocks of the hive node block-conversion sphere (0 disables it).",
+                        "Default: 8")
+                .defineInRange("hiveNodeInfestationRadius", 8, 0, 32);
+
         SAFETY_DAY_DURATION_TICKS = BUILDER
                 .comment(" ",
                         "Safe day duration (game tick)")
@@ -110,6 +124,14 @@ public class ModConfig {
 
     public static boolean isCothLevel4Allowed() {
         return ALLOW_COTH_LEVEL_4.get();
+    }
+
+    public static boolean isHiveNodeInfestationEnabled() {
+        return HIVE_NODE_INFEST_ENABLED.get();
+    }
+
+    public static int getHiveNodeInfestationRadius() {
+        return HIVE_NODE_INFEST_RADIUS.get();
     }
 
     public static boolean isParasitePeaceful() {

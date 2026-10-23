@@ -29,7 +29,7 @@ public final class EntityBreakUtils {
 
         // Vanilla mobs only modify the world when mobGriefing allows it; without this the parasites
         // quietly tore down every torch/lantern around a base.
-        if (!entity.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
+        if (!org.tdddd.epca.impl.utils.DifficultyGuards.canGrief(entity.level())) {
             return currentCooldown;
         }
 

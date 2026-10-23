@@ -351,7 +351,7 @@ public class InfestedDrowned extends PathfinderMob implements GeoEntity, IParasi
     private boolean breakIceAt(BlockPos pos) {
         BlockState state = this.level().getBlockState(pos);
         if (state.is(Blocks.ICE) || state.is(Blocks.FROSTED_ICE)) {
-            this.level().destroyBlock(pos, false); 
+            org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(this.level(), pos, false); 
             this.level().playSound(null, pos, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
             return true;
         }

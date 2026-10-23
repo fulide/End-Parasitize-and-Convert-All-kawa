@@ -793,7 +793,7 @@ public class ReshapeLongarms extends PathfinderMob implements GeoEntity, IParasi
         if (!blockState.isAir() && !blockState.canBeReplaced()) {
             float destroyTime = blockState.getDestroySpeed(this.level(), pos);
             if (destroyTime >= 0 && destroyTime <= 1.0f) {
-                if (this.level().destroyBlock(pos, true, this) && blockState.getSoundType() != null) {
+                if (org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(this.level(), pos, true, this) && blockState.getSoundType() != null) {
                     this.level().playSound(null, pos, blockState.getSoundType().getBreakSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
                 }
             }
@@ -953,7 +953,7 @@ public class ReshapeLongarms extends PathfinderMob implements GeoEntity, IParasi
         BlockState state = level().getBlockState(pos);
         if (!state.isAir() && !state.canBeReplaced() && isBreakableBlock(pos)) {
             List<ItemStack> drops = getDrops(state, pos);
-            boolean destroyed = level().destroyBlock(pos, false, this);
+            boolean destroyed = org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(level(), pos, false, this);
             if (destroyed) {
                 if (state.getSoundType() != null) level().playSound(null, pos, state.getSoundType().getBreakSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
                 for (ItemStack drop : drops) addItemToInventory(drop);

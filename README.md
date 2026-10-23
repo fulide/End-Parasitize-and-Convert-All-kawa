@@ -63,6 +63,21 @@ PORTING-REPORT.md                            完整移植报告（依赖决策/�
 - 完整移植说明、依赖决策、已知限制、逐条排错记录：[PORTING-REPORT.md](PORTING-REPORT.md)
 - 非官方声明与第三方内容：[NOTICE.md](NOTICE.md)
 
+## 配置
+
+配置文件：`config/E-PCA/epca_main_config.toml`（COMMON）。
+
+| 键 | 默认 | 说明 |
+|---|---|---|
+| `allowCothLevel4` | `false` | 寄巢之唤是否允许升到 IV 级 |
+| `defaultExtraDifficulty` | `normal` | 世界额外难度：`easy/normal/expert/master/legendary/custom` |
+| `parasitePeaceful` | `false` | 虫族是否只攻击白名单目标 |
+| `hiveNodeInfestationEnabled` | `true` | 蜂巢节点是否转化周围方块（`false` = 不啃地图） |
+| `hiveNodeInfestationRadius` | `8` | 转化球体半径（0–32，`0` 等效关闭） |
+| `safetyDayEnabled` / `safetyDayDurationTicks` | `false` / `60000` | 安全日（期间自然生成的虫族直接消失） |
+
+行为约定：虫族在**和平难度**下不会生成、已有的会被清除；`mobGriefing=false` 时它们不会破坏任何方块（拆灯、破冰、信标清场、节点转化都会停）。
+
 ## 已知限制（摘要）
 
 1. 物理化方块（infected carved pumpkin 物理实体）降级为普通方块 —— `epca_physics` 无 1.21.1 产物，本工程提供 API 兼容层。

@@ -374,14 +374,26 @@ public class HiveNodeBlockEntity extends BlockEntity {
      * stage I, and both limits live in BlockConversionManager's own configs.</p>
      */
     private void infestNearby(net.minecraft.server.level.ServerLevel level) {
+        // configurable switch: some packs want the parasites without the terrain being eaten
+        if (!org.tdddd.epca.impl.ModConfig.isHiveNodeInfestationEnabled()) {
+            return;
+        }
+        // and like any other world modification it must obey the vanilla mobGriefing rule
+        if (!org.tdddd.epca.impl.utils.DifficultyGuards.canGrief(level)) {
+            return;
+        }
+        int radius = Math.max(0, org.tdddd.epca.impl.ModConfig.getHiveNodeInfestationRadius());
+        if (radius <= 0) {
+            return;
+        }
         int stage = org.tdddd.epca.impl.overworld.data.EvolutionManager.getStageForDimension(level);
         org.tdddd.epca.impl.overworld.registry.blocks.BlockConversionManager manager =
                 org.tdddd.epca.impl.overworld.registry.blocks.BlockConversionManager.getInstance();
         for (int attempt = 0; attempt < 12; attempt++) {
-            double dx = (level.random.nextDouble() * 2.0D - 1.0D) * INFEST_RADIUS;
-            double dy = (level.random.nextDouble() * 2.0D - 1.0D) * INFEST_RADIUS;
-            double dz = (level.random.nextDouble() * 2.0D - 1.0D) * INFEST_RADIUS;
-            if (dx * dx + dy * dy + dz * dz > (double) (INFEST_RADIUS * INFEST_RADIUS)) {
+            double dx = (level.random.nextDouble() * 2.0D - 1.0D) * radius;
+            double dy = (level.random.nextDouble() * 2.0D - 1.0D) * radius;
+            double dz = (level.random.nextDouble() * 2.0D - 1.0D) * radius;
+            if (dx * dx + dy * dy + dz * dz > (double) (radius * radius)) {
                 continue;                               // outside the maximum sphere, retry
             }
             BlockPos target = this.worldPosition.offset((int) dx, (int) dy, (int) dz);

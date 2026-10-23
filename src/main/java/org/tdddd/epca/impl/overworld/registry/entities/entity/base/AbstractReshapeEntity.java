@@ -251,7 +251,7 @@ public abstract class AbstractReshapeEntity extends AbstractEpcaEntity implement
         BlockPos pos = blocksToDestroy.get(destructionIndex);
         BlockState state = level().getBlockState(pos);
         if (!state.isAir() && !state.canBeReplaced() && isBreakableBlock(pos)) {
-            boolean destroyed = level().destroyBlock(pos, false, this);
+            boolean destroyed = org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(level(), pos, false, this);
             if (destroyed && state.getSoundType() != null) {
                 level().playSound(null, pos, state.getSoundType().getBreakSound(),
                         SoundSource.BLOCKS, 1.0F, 1.0F);

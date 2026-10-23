@@ -47,6 +47,23 @@ public final class DifficultyGuards {
                 && level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING);
     }
 
+    /** 原版 {@code mobGriefing} 规则：为 false 时生物不得改动世界（拆方块、踩农田等）。 */
+    public static boolean canGrief(Level level) {
+        return level != null && level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
+    }
+
+    /**
+     * 生物拆方块的统一入口：{@code mobGriefing} 关掉时直接返回 false。
+     * 原版所有生物行为都走这条规则，本模组之前直接调 {@code level.destroyBlock(...)}，等于无视它。
+     */
+    public static boolean destroyBlock(Level level, BlockPos pos, boolean drop) {
+        return canGrief(level) && level.destroyBlock(pos, drop);
+    }
+
+    public static boolean destroyBlock(Level level, BlockPos pos, boolean drop, Entity breaker) {
+        return canGrief(level) && level.destroyBlock(pos, drop, breaker);
+    }
+
     /** 把原版的"和平难度不刷怪"包到自定义 {@code SpawnPredicate} 外面。 */
     public static <T extends Entity> SpawnPlacements.SpawnPredicate<T> peacefulGuard(
             SpawnPlacements.SpawnPredicate<T> delegate) {

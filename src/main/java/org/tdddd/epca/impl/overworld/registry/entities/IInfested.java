@@ -99,7 +99,7 @@ public interface IInfested {
             if (mob.level().isLoaded(pos)) {
                 BlockState state = mob.level().getBlockState(pos);
                 if (isIncompleteLightSource(state)) {
-                    mob.level().destroyBlock(pos, true, mob);
+                    org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(mob.level(), pos, true, mob);
                     return getBreakCooldown();
                 }
             }

@@ -894,7 +894,7 @@ public class ReshapeYelloweye extends PathfinderMob implements GeoEntity, IParas
         BlockState state = level().getBlockState(pos);
         if (!state.isAir() && !state.canBeReplaced() && isBreakableBlock(pos)) {
             List<ItemStack> drops = getDropsWithoutTool(state, pos);
-            boolean destroyed = level().destroyBlock(pos, false, this);
+            boolean destroyed = org.tdddd.epca.impl.utils.DifficultyGuards.destroyBlock(level(), pos, false, this);
             if (destroyed) {
                 if (state.getSoundType() != null) {
                     level().playSound(null, pos, state.getSoundType().getBreakSound(), SoundSource.BLOCKS, 1.0F, 1.0F);

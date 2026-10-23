@@ -371,6 +371,27 @@ cd D:\dev\projects\epca-1.21.1
     - 召唤 9 只 ripper → `/kill @e[type=epca:ripper]` → `Killed 9 entities`，3 秒后 **Test failed**（无残留）；
     - `mobGriefing false` 时火把 4 秒后仍在（Test passed）；`mobGriefing true` 时火把被拆（Test failed，证明功能未被写死关掉）。
 
+26. **🟢 蜂巢节点转化开关 + 半径配置，以及"所有生物都守 mobGriefing"**
+    承接 §7.25：虫族不再无视 `mobGriefing` 拆灯，但仍有**三类世界改动**没走这条规则，且用户希望能关掉/调小方块转化。
+    新增配置（`config/E-PCA/epca_main_config.toml`，COMMON）：
+    | 键 | 类型 | 默认 | 说明 |
+    |---|---|---|---|
+    | `hiveNodeInfestationEnabled` | bool | `true` | 蜂巢节点是否把周围方块转化成虫染方块；`false` = 完全不动地形 |
+    | `hiveNodeInfestationRadius` | int (0–32) | `8` | 转化球体半径，`0` 等效于关闭 |
+    代码：
+    - `ModConfig` 增加两项与 getter；`HiveNodeBlockEntity#infestNearby` 开头做三重判定
+      （开关 → `mobGriefing` → 半径 > 0），半径改为读配置；
+    - `DifficultyGuards` 新增 `canGrief(Level)` 与两个 `destroyBlock(level, pos, drop[, breaker])` 包装；
+    - **所有生物造成的方块破坏**统一改走包装：`IInfested`（14 种虫族的拆灯）、`AbstractLinkEntity`、
+      `AbstractReshapeEntity`、`InfestedDrowned`/`WalkingDrownedHead`（破冰）、`StageI/II Beckon`、
+      `ReshapeLongarms`、`ReshapeYelloweye`、`EntityBreakUtils`。
+    - 静态审计：剩下的 `level.destroyBlock(...)` 只剩**方块自身行为**（虫染珊瑚/蛛网/残留物/猪笼草等自毁，
+      与原版冰/甘蔗同理），不属于生物破坏，未加限制。
+    验证（专用服务端 RCON）：
+    - 配置文件生成后确实包含两项（`hiveNodeInfestationEnabled = true` / `hiveNodeInfestationRadius = 8`）；
+    - 第二种生物（`epca:infested_husk`，走 `IInfested` 路径而不是 `EntityBreakUtils`）：
+      `mobGriefing=false` 时火把 8 秒后仍在（Test passed）；`mobGriefing=true` 时被拆（Test failed）。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。
