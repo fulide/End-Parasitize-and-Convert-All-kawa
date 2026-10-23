@@ -204,6 +204,10 @@ public class HiveNodeBlockEntity extends BlockEntity {
     }
 
     private boolean spawnCurbug(net.minecraft.server.level.ServerLevel level) {
+        // like a vanilla spawner: nothing is created in peaceful or with doMobSpawning off
+        if (!org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(level)) {
+            return false;
+        }
         net.minecraft.world.entity.Mob mob = org.tdddd.epca.impl.overworld.registry.ModEntities.CURBUG.get().create(level);
         if (mob == null) {
             return false;
@@ -438,6 +442,9 @@ public class HiveNodeBlockEntity extends BlockEntity {
             }
             // mature into a ripper, in place
             bug.discard();
+            if (!org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(level)) {
+                continue;
+            }
             net.minecraft.world.entity.Mob ripper =
                     org.tdddd.epca.impl.overworld.registry.ModEntities.RIPPER.get().create(level);
             if (ripper != null) {

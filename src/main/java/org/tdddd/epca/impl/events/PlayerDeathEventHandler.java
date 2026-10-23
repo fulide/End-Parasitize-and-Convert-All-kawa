@@ -26,6 +26,10 @@ public class PlayerDeathEventHandler {
         if (effect == null || effect.getAmplifier() == 0) return;
 
         ServerLevel level = (ServerLevel) player.level();
+        if (!org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(level)) {
+            player.removeEffect(ModEffects.COTH);
+            return;
+        }
         MediumIncompleteForm infested = new MediumIncompleteForm(
                 ModEntities.MEDIUM_INCOMPLETE_FORM.get(), level);
         infested.setPos(player.getX(), player.getY(), player.getZ());

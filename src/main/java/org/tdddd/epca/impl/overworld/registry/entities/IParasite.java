@@ -129,6 +129,12 @@ public interface IParasite {
 
     
     default float handleParasiteDamage(DamageSource source, float amount) {
+        // /kill, void and friends must not be reduced to 0 by the damage-adaptation system -
+        // otherwise an admin cannot clean up a laggy parasite swarm.
+        if (source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return amount;
+        }
+
         LivingEntity parasite = (LivingEntity) this;
 
         

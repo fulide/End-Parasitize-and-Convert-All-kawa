@@ -278,7 +278,10 @@ public abstract class AbstractReshapeEntity extends AbstractEpcaEntity implement
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (isInvulnerable()) return false;
+        // bypassing sources (/kill, void) must never be refused by the invulnerability flag
+        if (isInvulnerable() && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return false;
+        }
         return super.hurt(source, amount); // AbstractEpcaEntity handles the rest
     }
 

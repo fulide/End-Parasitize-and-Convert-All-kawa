@@ -23,8 +23,15 @@ public abstract class MobMixin {
     @Inject(method = "checkDespawn", at = @At("HEAD"), cancellable = true)
     private void onCheckDespawn(CallbackInfo ci) {
         Mob mob = (Mob) (Object) this;
-        
+
         if (!(mob.level() instanceof ServerLevel level)) return;
+
+        // Peaceful must win: vanilla Mob#checkDespawn discards hostile mobs there, and our
+        // "do not despawn" protections must not keep them alive (reported as "mobs still spawn and
+        // keep aggro in peaceful, they just cannot deal damage").
+        if (level.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
+            return;
+        }
 
         
         if (mob instanceof IParasite) {

@@ -165,6 +165,16 @@ public abstract class AbstractEpcaEntity extends PathfinderMob
 
     
 
+    /**
+     * 原版 {@code Monster#shouldDespawnInPeaceful()} 返回 true，所以切和平难度时敌对生物会被
+     * {@code Mob#checkDespawn} 立刻移除。本模组的生物只实现了 {@code Enemy} 接口，默认是 {@code false}，
+     * 于是和平难度下它们会一直留着（还带着仇恨，只是打不出伤害）。这里补上，让它们和原版一致。
+     */
+    @Override
+    protected boolean shouldDespawnInPeaceful() {
+        return true;
+    }
+
     public static AttributeSupplier.Builder createBaseAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
@@ -320,15 +330,20 @@ public abstract class AbstractEpcaEntity extends PathfinderMob
     public boolean hurt(DamageSource source, float amount) {
         boolean bypass = source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
 
-        // A death that stalled (health already 0 but the entity never got removed) must not turn
-        // into permanent immunity: vanilla early-outs on isDeadOrDying() before it ever looks at
-        // BYPASSES_INVULNERABILITY, which is why /kill used to do nothing on such mobs.
-        if (bypass && isDeadOrDying() && !isRemoved()) {
+        // /kill and other bypassing sources must always land: skip the parasite damage pipeline
+        // (damage adaptation can clamp the amount to zero, and AI guards can refuse it).
+        if (bypass) {
+            if (isDeadOrDying() && !isRemoved()) {
+                this.setFakingDeath(false);
+                this.setInvulnerable(false);
+                this.setNoAi(false);
+                this.remove(Entity.RemovalReason.KILLED);
+                return true;
+            }
             this.setFakingDeath(false);
             this.setInvulnerable(false);
             this.setNoAi(false);
-            this.remove(Entity.RemovalReason.KILLED);
-            return true;
+            return super.hurt(source, amount);
         }
 
         if (isFakingDeath()) {

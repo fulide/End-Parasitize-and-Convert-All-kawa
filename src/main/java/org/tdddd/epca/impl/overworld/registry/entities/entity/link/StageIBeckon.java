@@ -708,6 +708,11 @@ public class StageIBeckon extends PathfinderMob implements GeoEntity, IParasite,
 
     
     private void spawnBiomass() {
+        // 和平难度 / 关闭 doMobSpawning 时不再刷生物质
+        if (!org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(this.level())) {
+            return;
+        }
+
         if (this.level() instanceof ServerLevelAccessor) {
             
             Vec3 eyePosition = this.getEyePosition();

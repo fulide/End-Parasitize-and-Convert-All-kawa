@@ -351,6 +351,26 @@ cd D:\dev\projects\epca-1.21.1
     ⚠️ 没有改动 `isExploding()` 分支（`LargeIncompleteForm`/`ReshapeYelloweye`）和方块实体
     `SwallowCystBlockEntity` 的 `dead_idle`——那不是假死动画。
 
+25. **🔴 让虫族"像原版敌对生物一样守规矩"（和平难度 / /kill / 破坏方块）**
+    用户反馈：和平难度下照样冒虫、还带仇恨（只是打不出伤害）；`/kill` 把血打到 0 却清不掉；
+    蜂巢方块刷出大量 ripper 拖低 TPS。排查后确认这是**三处"越界"**叠加：
+    | 越界点 | 原因 |
+    |---|---|
+    | 和平难度不消失 | `AbstractEpcaEntity` 没覆写 `shouldDespawnInPeaceful()`（原版 `Monster` 里是 `true`），只有 4 个类单独覆写过；且 `MobMixin.checkDespawn` 对"受保护"生物**无条件 cancel**，把原版的和平清除也一起吃掉了 |
+    | 和平难度照常生成 | 61 条 `SpawnPlacements` 用的是自定义 `checkXxxSpawnRules`，绕过了 `Monster.checkMonsterSpawnRules` 里的 `difficulty != PEACEFUL`；方块刷怪器（蜂巢节点、信标、感染石、玩家死亡转化）也完全不看难度与 `doMobSpawning` |
+    | `/kill` 清不掉 | 50 多个实体的 `hurt()` 会先走 `IParasite#onHurt` → `handleParasiteDamage`，它在"伤害适应无敌"时**直接返回 0**，`/kill` 的 `genericKill` 也被抹成 0；`AbstractReshapeEntity#hurt` 还额外用 `isInvulnerable()` 挡掉了穿透伤害 |
+    | 拆玩家火把 | `EntityBreakUtils.tryBreakLightSources` 直接 `destroyBlock`，**不看 `mobGriefing`** |
+    修复：
+    - 新增 `utils/DifficultyGuards`：`isPeaceful` / `canSpawnHostiles`（和平或关 `doMobSpawning` 都不刷）/ `peacefulGuard(SpawnPredicate)`；
+    - `AbstractEpcaEntity#shouldDespawnInPeaceful()` → `true`；`MobMixin#checkDespawn` 在和平难度直接放行给原版处理；
+    - **61 条**刷怪规则统一套上 `peacefulGuard(...)`；蜂巢节点（curbug + ripper 成熟）、`StageI/II Beckon` 生物质、6 个感染石方块、玩家死亡转化全部加 `canSpawnHostiles` 判定；
+    - `IParasite#handleParasiteDamage` 遇到 `BYPASSES_INVULNERABILITY` 直接返回原始伤害；`AbstractEpcaEntity#hurt` 对穿透伤害**跳过整条 parasite 伤害管线**（含 `shouldIgnoreDamageFrom` 与 `onHurt`），并在 0 血时直接 `remove(KILLED)`；`AbstractReshapeEntity#hurt` 同样放行穿透伤害；
+    - `EntityBreakUtils` 受 `mobGriefing` 约束。
+    验证（专用服务端 RCON）：
+    - 普通难度召唤感染僵尸 → `/difficulty peaceful` → 3 秒后 `execute if entity` **Test failed**（已清除）；
+    - 召唤 9 只 ripper → `/kill @e[type=epca:ripper]` → `Killed 9 entities`，3 秒后 **Test failed**（无残留）；
+    - `mobGriefing false` 时火把 4 秒后仍在（Test passed）；`mobGriefing true` 时火把被拆（Test failed，证明功能未被写死关掉）。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。

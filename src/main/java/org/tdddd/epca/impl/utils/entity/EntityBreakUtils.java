@@ -27,6 +27,12 @@ public final class EntityBreakUtils {
     public static int tryBreakLightSources(LivingEntity entity, int currentCooldown) {
         if (currentCooldown > 0) return currentCooldown - 1;
 
+        // Vanilla mobs only modify the world when mobGriefing allows it; without this the parasites
+        // quietly tore down every torch/lantern around a base.
+        if (!entity.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
+            return currentCooldown;
+        }
+
         BlockPos entityPos = entity.blockPosition();
         Level level = entity.level();
 

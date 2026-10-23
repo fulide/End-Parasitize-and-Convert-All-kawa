@@ -73,7 +73,7 @@ public class InfestedInfestedStone extends Block implements InfestedBlockInterfa
                     }
                 }
 
-                if (shouldSpawn) {
+                if (shouldSpawn && org.tdddd.epca.impl.utils.DifficultyGuards.canSpawnHostiles(level)) {
                     
                     EntityType<?> infestedSilverfishEntityType = ModEntities.INFESTED_SILVERFISH.get();
                     Entity infestedSilverfish = infestedSilverfishEntityType.create(level);
