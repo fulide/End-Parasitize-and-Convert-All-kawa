@@ -82,6 +82,7 @@ PORTING-REPORT.md                            完整移植报告（依赖决策/�
 | `auraScanIntervalTicks` | `40` | 伪装/灵体光环扫描间隔 |
 | `hiveNodeActiveRange` | `128` | 该范围内没有玩家时蜂巢节点跳过昂贵扫描 |
 | `attackBroadcastCooldownTicks` | `20` | 受击广播仇恨的最小间隔 |
+| `contaminatedWaterLimit` | `24` | 每维度同时存在的污染水实体上限 |
 
 行为约定：虫族在**和平难度**下不会生成、已有的会被清除；`mobGriefing=false` 时它们不会破坏任何方块（拆灯、破冰、信标清场、节点转化都会停）。
 

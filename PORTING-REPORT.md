@@ -434,6 +434,30 @@ cd D:\dev\projects\epca-1.21.1
     | 原行为（interval=1、半径 256） | 249 ~ 279 | **22.4 ~ 25.0 ms** |
     ⇒ 每只生物摊到约 0.033 ms → 0.090 ms，同等虫量下 **≈2.7 倍**。注意这是"全部生物空闲挂机"的场景（索敌/拆灯扫描正好是空闲时最贵），实战（有玩家、有战斗）比例会小一些。
 
+29. **🔴 污染水实体把客户端渲染线程拖到 1 FPS（切维度时 5.8 s 一帧）**
+    现场诊断（由用户提供 JFR 报告）：切维度进主世界后 FPS=1，渲染线程 85% 采样落在
+    `ContaminatedWater.tick()` → `Entity.baseTick()` → `updateFluidHeightAndDoFluidPushing`。
+    核对源码后确认三个叠加问题：
+    1. **碰撞箱**：实体类型基础尺寸就是 **5×5**，构造器又 `inflate(2.5)` → **10×10×10 ≈ 1000 格**；
+       原版 `baseTick` 每 tick 对碰撞箱内**每个方块**查流体（水 + 岩浆两遍），单实体每 tick 约 1000+ 次
+       `PalettedContainer.get`，客户端/服务端都跑；
+    2. **客户端也执行 `super.tick()`**：该实体客户端没有任何逻辑（渲染走 `GasCloudManager` 自己的
+       `clientTickCounter`），白白在渲染线程上做流体扫描；
+    3. **上限失效**：`ContaminatedWaterLimitHandler` 超限时只 `entity.discard()`、不 `cancel` 事件，
+       实体会照常被 `ServerLevel.addEntity` 注册（并可能同步给客户端），再叠加"全量遍历里把已
+       discard 的也算进去"，上限被永久锁死、客户端还会累积幽灵副本。
+    修复：
+    - 构造器不再放大碰撞箱；伤害判定改用 `getBoundingBox().inflate(DAMAGE_RADIUS = 2.5)`，
+      **伤害范围与流体扫描范围解耦**（玩法不变，扫描量降 ~8×，且不再随伤害半径膨胀）；
+    - `tick()` 增加客户端分支：只 `lifeTicks++` 和到期 `discard()`，**跳过 `super.tick()`**（渲染线程成本归零）；
+    - 上限改为 **cancel join 事件** + 只统计未移除实体，并抽成配置 `contaminatedWaterLimit`（默认 24）。
+    验证（专用服务端，隔离区块）：
+    - 一次请求生成 40 个 → **实际只生成 24 个**（`WATER_SPAWNED 24`，`execute if entity` 计数 24）；
+    - 11 秒后全部消失（200 tick 寿命正常）；
+    - 水里放一头牛 → 3 秒内获得 `epca:coth`（duration 324）且血量 10 → 7.3，**伤害半径未被改坏**。
+    对现场报告的其它确认：报告 §3.1 的 87–91% 实体 tick 占比与源码一致；§3.3 的"数百个"实体的来源
+    是基础 5×5 再 inflate 后的 1000 格扫描 + 上限失效；建议的 Mixin 方案不再需要（已在实体内部解决）。
+
 ## 8. 后续可做（按优先级）
 
 1. **移植 `epca_physics`**（46 类：SubLevel 物理、碰撞 mixin、同步、渲染）→ 恢复物理化方块。

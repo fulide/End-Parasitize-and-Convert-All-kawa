@@ -23,12 +23,17 @@ public class ContaminatedWaterLimitHandler {
 
         int existingCount = 0;
         for (Entity e : level.getEntities().getAll()) {
-            if (e instanceof ContaminatedWater && e != entity) {
+            // only count live ones: discarded entities stay in the level's entity manager for a
+            // while, and counting them used to lock the cap permanently once it was hit
+            if (e instanceof ContaminatedWater && e != entity && !e.isRemoved()) {
                 existingCount++;
             }
         }
 
-        if (existingCount >= MAX_CONTAMINATED_WATER) {
+        if (existingCount >= org.tdddd.epca.impl.ModConfig.getContaminatedWaterLimit()) {
+            // Cancel the join: entity.discard() alone still lets ServerLevel.addEntity register the
+            // entity (and potentially send it to clients), which is how ghost copies piled up.
+            event.setCanceled(true);
             entity.discard();
         }
     }

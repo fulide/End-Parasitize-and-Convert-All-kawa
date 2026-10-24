@@ -25,6 +25,9 @@ import java.util.UUID;
 
 public class ContaminatedWater extends Entity {
 
+    /** Radius added to the (un-inflated) collision box when looking for damage targets. */
+    public static final double DAMAGE_RADIUS = 2.5D;
+
     /**
      * Natural end of life of this entity, in ticks: 200 ticks = 10 seconds.
      *
@@ -50,8 +53,11 @@ public class ContaminatedWater extends Entity {
         super(entityType, level);
         this.entityId = this.getUUID();
         
-        this.setBoundingBox(this.getBoundingBox().inflate(2.5, 2.5, 2.5));
-        
+        // NOTE: do NOT inflate the collision box here. Entity.baseTick() scans *every block in the
+        // bounding box* for fluids (twice: water and lava); this entity's base box is already 5x5,
+        // so inflating by 2.5 turned it into 10x10x10 (~1000 fluid lookups per tick per entity on
+        // BOTH sides). That is what made dimension changes drop to 1 FPS. The damage radius is
+        // applied to the query in tick() instead (see DAMAGE_RADIUS).
         this.noPhysics = true;
     }
 
@@ -63,6 +69,18 @@ public class ContaminatedWater extends Entity {
 
     @Override
     public void tick() {
+        if (this.level().isClientSide) {
+            // The client copy has no logic of its own: it only needs the lifetime counter so the
+            // effect disappears even when the server-side chunk is loaded but not entity-ticking.
+            // Skipping super.tick() avoids Entity.baseTick()'s fluid scan on the render thread
+            // (the renderer reads GasCloudManager's own client tick counter, not the entity's).
+            lifeTicks++;
+            if (lifeTicks >= MAX_LIFETIME_TICKS) {
+                this.discard();
+            }
+            return;
+        }
+
         super.tick();
         lifeTicks++;
 
@@ -85,7 +103,7 @@ public class ContaminatedWater extends Entity {
 
             List<Entity> entities = serverLevel.getEntities(
                     this,
-                    this.getBoundingBox(),
+                    this.getBoundingBox().inflate(DAMAGE_RADIUS),
                     entity -> entity instanceof LivingEntity
             );
 

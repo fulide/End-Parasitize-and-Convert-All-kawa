@@ -53,6 +53,8 @@ public class ModConfig {
     public static final ModConfigSpec.IntValue HIVE_NODE_ACTIVE_RANGE;
     /** 受击时向同类广播仇恨的最小间隔（tick）。 */
     public static final ModConfigSpec.IntValue ATTACK_BROADCAST_COOLDOWN_TICKS;
+    /** 同一维度同时存在的污染水实体上限。 */
+    public static final ModConfigSpec.IntValue CONTAMINATED_WATER_LIMIT;
     static {
         BUILDER.push("End-Parasitize and Convert All Configuration");
 
@@ -164,6 +166,11 @@ public class ModConfig {
                         "Default: 20")
                 .defineInRange("attackBroadcastCooldownTicks", 20, 1, 200);
 
+        CONTAMINATED_WATER_LIMIT = BUILDER
+                .comment("Maximum live epca:contaminated_water entities per dimension. Default: 24",
+                        "They are cheap now, but a heavy infested area can still spawn hundreds.")
+                .defineInRange("contaminatedWaterLimit", 24, 1, 256);
+
         BUILDER.pop();
 
         SAFETY_DAY_DURATION_TICKS = BUILDER
@@ -214,6 +221,10 @@ public class ModConfig {
 
     public static int getHiveNodeActiveRange() {
         return Math.max(16, HIVE_NODE_ACTIVE_RANGE.get());
+    }
+
+    public static int getContaminatedWaterLimit() {
+        return Math.max(1, CONTAMINATED_WATER_LIMIT.get());
     }
 
     public static int getAttackBroadcastCooldownTicks() {
